@@ -137,8 +137,7 @@
     "keybindings": [
       {
         "command": "espforge.newProject",
-        "key": "ctrl+shift+n",
-        "when": "espforge.projectActive"
+        "key": "ctrl+shift+n"
       },
       {
         "command": "espforge.build",

@@ -91,19 +91,24 @@ export class ProjectManager {
       return;
     }
 
-    for (const folder of workspaceFolders) {
-      const ferrous32Path = path.join(folder.uri.fsPath, "ferrous32.toml");
+    // Search for ferrous32.toml anywhere in the workspace (limit 1 for now to avoid huge searches)
+    const ferrousFiles = await vscode.workspace.findFiles("**/ferrous32.toml", "**/{node_modules,target}/**", 1);
+    
+    if (ferrousFiles.length > 0) {
+      const ferrous32Path = ferrousFiles[0].fsPath;
+      const rootPath = path.dirname(ferrous32Path);
+      await this.loadProject(rootPath, ferrous32Path);
+      return;
+    }
 
-      if (fs.existsSync(ferrous32Path)) {
-        await this.loadProject(folder.uri.fsPath, ferrous32Path);
-        return;
-      }
+    // Try to adopt existing Rust project recursively
+    const cargoConfigFiles = await vscode.workspace.findFiles("**/.cargo/config.toml", "**/{node_modules,target}/**", 1);
+    if (cargoConfigFiles.length > 0) {
+      const cargoConfigPath = cargoConfigFiles[0].fsPath;
+      const rootPath = path.dirname(path.dirname(cargoConfigPath));
+      const cargoTomlPath = path.join(rootPath, "Cargo.toml");
 
-      // Try to adopt existing Rust project
-      const cargoTomlPath = path.join(folder.uri.fsPath, "Cargo.toml");
-      const cargoConfigPath = path.join(folder.uri.fsPath, ".cargo", "config.toml");
-
-      if (fs.existsSync(cargoTomlPath) && fs.existsSync(cargoConfigPath)) {
+      if (fs.existsSync(cargoTomlPath)) {
         const config = fs.readFileSync(cargoConfigPath, "utf8");
         if (config.includes("xtensa-") || config.includes("riscv32")) {
           const adopt = await vscode.window.showInformationMessage(
@@ -112,7 +117,7 @@ export class ProjectManager {
             "Dismiss"
           );
           if (adopt === "Adopt Project") {
-            await this.adoptProject(folder.uri.fsPath, cargoTomlPath, cargoConfigPath);
+            await this.adoptProject(rootPath, cargoTomlPath, cargoConfigPath);
           }
         }
       }

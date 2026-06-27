@@ -1,6 +1,4 @@
 import * as vscode from "vscode";
-import * as path from "path";
-import * as os from "os";
 import { ProcessRunner } from "../utils/processRunner";
 
 export interface ToolInfo {
@@ -24,6 +22,14 @@ export class ToolchainManager {
 
   async getToolInfo(): Promise<ToolInfo[]> {
     const tools: ToolInfo[] = [];
+
+    // git
+    let gitInfo = await this.getToolVersionFallback(["git", "git.exe"], ["--version"]);
+    tools.push({ name: "Git", command: gitInfo.installed ? gitInfo.command : "git", ...gitInfo });
+
+    // python
+    let pythonInfo = await this.getToolVersionFallback(["python3", "python", "py"], ["--version"]);
+    tools.push({ name: "Python", command: pythonInfo.installed ? pythonInfo.command : "python3", ...pythonInfo });
 
     // espup
     const espupInfo = await this.getToolVersion("espup", ["--version"]);
@@ -130,16 +136,27 @@ export class ToolchainManager {
     });
   }
 
-  private async getToolVersion(
-    cmd: string,
-    args: string[]
-  ): Promise<{ installed: boolean; version?: string }> {
+  private async getToolVersion(cmd: string, args: string[]): Promise<{ installed: boolean; version?: string }> {
     try {
       const result = await this.runner.runSilent(cmd, args);
-      return { installed: true, version: result.stdout.trim().split("\n")[0] };
+      const version = result.stdout.trim().split("\n")[0] ?? "unknown";
+      return { installed: true, version };
     } catch {
       return { installed: false };
     }
+  }
+
+  private async getToolVersionFallback(cmds: string[], args: string[]): Promise<{ installed: boolean; version?: string; command: string }> {
+    for (const cmd of cmds) {
+      try {
+        const result = await this.runner.runSilent(cmd, args);
+        const version = result.stdout.trim().split("\n")[0] ?? "unknown";
+        return { installed: true, version, command: cmd };
+      } catch {
+        // Continue to next fallback
+      }
+    }
+    return { installed: false, command: cmds[0] };
   }
 
   private buildManagementHtml(tools: ToolInfo[], targets: string[]): string {
@@ -149,9 +166,9 @@ export class ToolchainManager {
         <div class="tool-row">
           <div class="tool-name">${t.name}</div>
           <div class="tool-version ${t.installed ? "ok" : "missing"}">
-            ${t.installed ? t.version ?? "installed" : "⚠ Not installed"}
+            ${t.installed ? t.version ?? "installed" : "Not installed"}
           </div>
-          ${t.installed ? `<button class="btn btn-sm" onclick="updateTool('${t.command}')">Update</button>` : `<button class="btn btn-sm btn-primary" onclick="installTool('${t.command}')">Install</button>`}
+          ${t.installed ? `<button class="btn btn-sm btn-secondary" onclick="updateTool('${t.command}')">Update</button>` : `<button class="btn btn-sm btn-primary" onclick="installTool('${t.command}')">Install</button>`}
         </div>`
       )
       .join("\n");
@@ -166,36 +183,60 @@ export class ToolchainManager {
   <meta charset="UTF-8">
   <title>Toolchain Manager</title>
   <style>
+    :root {
+      --bg: #000000;
+      --surface: #0a0a0a;
+      --border: #222222;
+      --border-hover: #444444;
+      --text: #ffffff;
+      --subtext: #888888;
+      --accent: #ffffff;
+      --accent-fg: #000000;
+      --danger: #ff4444;
+      --success: #a6e3a1;
+      --warning: #f9e2af;
+    }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { background: #1e1e2e; color: #cdd6f4; font-family: 'Segoe UI', sans-serif; padding: 24px; }
-    h1 { color: #89b4fa; font-size: 22px; margin-bottom: 24px; display: flex; align-items: center; gap: 8px; }
-    h2 { color: #cba6f7; font-size: 16px; margin: 24px 0 12px; }
-    .tool-row { display: flex; align-items: center; gap: 16px; padding: 12px 16px; background: #313244; border-radius: 8px; margin-bottom: 8px; }
-    .tool-name { font-weight: 600; width: 120px; }
+    body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; padding: 40px; line-height: 1.5; -webkit-font-smoothing: antialiased; max-width: 800px; margin: 0 auto; }
+    h1 { font-size: 24px; font-weight: 400; color: var(--text); letter-spacing: -0.5px; margin-bottom: 32px; }
+    h2 { font-size: 13px; font-weight: 500; color: var(--subtext); text-transform: uppercase; letter-spacing: 0.5px; margin: 32px 0 16px; }
+    
+    .tools-grid { display: flex; flex-direction: column; gap: 1px; background: var(--border); border: 1px solid var(--border); margin-bottom: 32px; }
+    .tool-row { display: flex; align-items: center; gap: 16px; padding: 16px 20px; background: var(--bg); transition: background 0.2s; }
+    .tool-row:hover { background: var(--surface); }
+    .tool-name { font-weight: 500; font-size: 14px; color: var(--text); width: 120px; }
     .tool-version { font-family: monospace; font-size: 13px; flex: 1; }
-    .tool-version.ok { color: #a6e3a1; }
-    .tool-version.missing { color: #f38ba8; }
-    .target-chip { display: inline-block; background: #45475a; border-radius: 6px; padding: 4px 10px; margin: 4px; font-family: monospace; font-size: 12px; color: #89b4fa; }
-    .btn { padding: 6px 14px; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; background: #585b70; color: #cdd6f4; transition: background 0.2s; }
-    .btn:hover { background: #6c7086; }
-    .btn-primary { background: #89b4fa; color: #1e1e2e; }
-    .btn-primary:hover { background: #74c7ec; }
-    .action-bar { display: flex; gap: 12px; margin-top: 24px; }
-    .btn-large { padding: 10px 20px; font-size: 14px; }
+    .tool-version.ok { color: var(--success); }
+    .tool-version.missing { color: var(--danger); }
+    
+    .targets-container { display: flex; flex-wrap: wrap; gap: 8px; }
+    .target-chip { display: inline-block; background: transparent; border: 1px solid var(--border); padding: 6px 12px; font-family: monospace; font-size: 12px; color: var(--text); }
+    
+    .btn { padding: 8px 16px; border: none; cursor: pointer; font-size: 13px; font-weight: 500; transition: all 0.2s; white-space: nowrap; }
+    .btn.btn-sm { padding: 6px 12px; }
+    .btn-secondary { background: transparent; color: var(--text); border: 1px solid var(--border); }
+    .btn-secondary:hover { border-color: var(--text); }
+    .btn-primary { background: var(--accent); color: var(--accent-fg); }
+    .btn-primary:hover { opacity: 0.8; }
+    
+    .action-bar { display: flex; gap: 16px; margin-top: 40px; padding-top: 32px; border-top: 1px solid var(--border); }
+    .btn-large { padding: 10px 24px; }
   </style>
 </head>
 <body>
-  <h1>🔧 ESP Toolchain Manager</h1>
+  <h1>ESP Toolchain Manager</h1>
 
   <h2>Installed Tools</h2>
+  <div class="tools-grid">
   ${toolRows}
+  </div>
 
   <h2>ESP Rust Targets</h2>
-  <div>${targetList || '<p style="color:#6c7086;font-size:13px">No ESP targets installed. Run espup install.</p>'}</div>
+  <div class="targets-container">${targetList || '<p style="color:var(--subtext);font-size:13px">No ESP targets installed. Run update ESP toolchain.</p>'}</div>
 
   <div class="action-bar">
-    <button class="btn btn-large btn-primary" onclick="updateEspup()">⬆ Update ESP Toolchain</button>
-    <button class="btn btn-large" onclick="repair()">🔁 Repair Installation</button>
+    <button class="btn btn-large btn-primary" onclick="updateEspup()">Update ESP Toolchain</button>
+    <button class="btn btn-large btn-secondary" onclick="repair()">Repair Installation</button>
   </div>
 
   <script>

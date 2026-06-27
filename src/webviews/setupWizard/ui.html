@@ -6,121 +6,125 @@
   <title>ESP Forge Setup</title>
   <style>
     :root {
-      --bg: #1e1e2e;
-      --surface: #313244;
-      --surface2: #181825;
-      --border: #45475a;
-      --text: #cdd6f4;
-      --subtext: #a6adc8;
-      --blue: #89b4fa;
-      --green: #a6e3a1;
-      --red: #f38ba8;
-      --yellow: #f9e2af;
-      --purple: #cba6f7;
-      --mauve: #b4befe;
+      --bg: #000000;
+      --surface: #0a0a0a;
+      --border: #222222;
+      --border-hover: #444444;
+      --text: #ffffff;
+      --subtext: #888888;
+      --accent: #ffffff;
+      --accent-fg: #000000;
+      --danger: #ff4444;
+      --success: #a6e3a1;
+      --warning: #f9e2af;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       background: var(--bg);
       color: var(--text);
-      font-family: 'Segoe UI', system-ui, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
+      -webkit-font-smoothing: antialiased;
     }
     .header {
-      background: linear-gradient(135deg, #1e1e2e 0%, #313244 100%);
+      background: var(--bg);
       border-bottom: 1px solid var(--border);
-      padding: 32px 40px 24px;
+      padding: 40px 40px 32px;
     }
-    .logo { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
-    .logo-icon { font-size: 36px; }
-    h1 { font-size: 28px; font-weight: 800; background: linear-gradient(90deg, var(--blue), var(--purple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-    .subtitle { color: var(--subtext); font-size: 14px; margin-top: 4px; }
-    .content { flex: 1; padding: 32px 40px; max-width: 900px; margin: 0 auto; width: 100%; }
+    .logo { display: flex; align-items: center; gap: 16px; margin-bottom: 8px; }
+    .logo-icon { display: none; }
+    h1 { font-size: 28px; font-weight: 400; color: var(--text); letter-spacing: -0.5px; }
+    .subtitle { color: var(--subtext); font-size: 14px; margin-top: 8px; }
+    .content { flex: 1; padding: 40px; max-width: 900px; margin: 0 auto; width: 100%; }
 
     /* Summary bar */
     .summary-bar {
-      display: flex; gap: 16px; margin-bottom: 24px; padding: 16px 20px;
-      background: var(--surface); border-radius: 12px; align-items: center;
+      display: flex; gap: 24px; margin-bottom: 32px; padding: 0 0 24px 0;
+      background: transparent; border-bottom: 1px solid var(--border); align-items: center;
     }
-    .summary-stat { display: flex; align-items: center; gap: 6px; font-size: 14px; }
-    .badge { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; font-weight: 700; font-size: 13px; }
-    .badge-ok { background: rgba(166,227,161,0.15); color: var(--green); }
-    .badge-bad { background: rgba(243,139,168,0.15); color: var(--red); }
-    .badge-warn { background: rgba(249,226,175,0.15); color: var(--yellow); }
+    .summary-stat { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--subtext); }
+    .badge { font-family: monospace; font-size: 14px; }
+    .badge-ok { color: var(--success); }
+    .badge-bad { color: var(--danger); }
+    .badge-warn { color: var(--warning); }
 
     /* Checklist */
-    .check-grid { display: flex; flex-direction: column; gap: 8px; margin-bottom: 28px; }
+    .check-grid { display: flex; flex-direction: column; gap: 1px; margin-bottom: 32px; background: var(--border); border: 1px solid var(--border); }
     .check-item {
-      display: flex; align-items: center; gap: 14px;
-      background: var(--surface); border-radius: 10px; padding: 14px 16px;
-      border: 1px solid var(--border); transition: border-color 0.2s;
+      display: flex; align-items: center; gap: 16px;
+      background: var(--bg); padding: 20px;
+      transition: background 0.2s;
     }
-    .check-item.ok { border-color: rgba(166,227,161,0.3); }
-    .check-item.missing { border-color: rgba(243,139,168,0.3); }
-    .check-icon { font-size: 20px; min-width: 24px; text-align: center; }
+    .check-item:hover { background: var(--surface); }
+    .check-icon { font-size: 16px; min-width: 24px; text-align: center; font-family: monospace; }
+    .check-icon.ok { color: var(--success); }
+    .check-icon.missing { color: var(--danger); }
     .check-info { flex: 1; }
-    .check-name { font-weight: 600; font-size: 14px; }
-    .check-desc { color: var(--subtext); font-size: 12px; margin-top: 2px; }
-    .check-version { font-family: monospace; font-size: 12px; color: var(--green); }
+    .check-name { font-weight: 500; font-size: 14px; color: var(--text); }
+    .check-desc { color: var(--subtext); font-size: 13px; margin-top: 4px; line-height: 1.4; }
+    .check-version { font-family: monospace; font-size: 12px; color: var(--subtext); margin-top: 4px; }
     .check-select { margin-left: auto; }
-    .check-select input[type=checkbox] { width: 18px; height: 18px; cursor: pointer; accent-color: var(--blue); }
+    .check-select input[type=checkbox] { 
+      appearance: none; width: 16px; height: 16px; border: 1px solid var(--border); 
+      background: transparent; cursor: pointer; transition: all 0.2s;
+    }
+    .check-select input[type=checkbox]:checked { background: var(--text); border-color: var(--text); }
 
     /* Install log */
     .log-container {
-      background: var(--surface2); border-radius: 10px; padding: 16px;
+      background: var(--surface); padding: 20px;
       height: 200px; overflow-y: auto; font-family: 'Cascadia Code', 'Fira Code', monospace;
-      font-size: 12px; line-height: 1.6; margin-bottom: 24px;
+      font-size: 12px; line-height: 1.6; margin-bottom: 32px;
       border: 1px solid var(--border); display: none;
     }
     .log-container.visible { display: block; }
     .log-line { color: var(--subtext); }
-    .log-line.progress { color: var(--blue); }
+    .log-line.progress { color: var(--text); }
 
     /* Progress bar */
-    .progress-outer { background: var(--border); border-radius: 8px; height: 8px; overflow: hidden; margin-bottom: 20px; display: none; }
+    .progress-outer { background: transparent; border: 1px solid var(--border); height: 4px; overflow: hidden; margin-bottom: 24px; display: none; }
     .progress-outer.visible { display: block; }
-    .progress-inner { height: 100%; background: linear-gradient(90deg, var(--blue), var(--purple)); border-radius: 8px; transition: width 0.4s ease; }
+    .progress-inner { height: 100%; background: var(--text); transition: width 0.4s ease; }
 
     /* Buttons */
-    .button-row { display: flex; gap: 12px; flex-wrap: wrap; }
+    .button-row { display: flex; gap: 16px; flex-wrap: wrap; }
     .btn {
-      padding: 11px 22px; border: none; border-radius: 8px; font-size: 14px;
-      font-weight: 600; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 6px;
+      padding: 10px 24px; border: none; font-size: 13px;
+      font-weight: 500; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 8px;
     }
-    .btn-primary { background: linear-gradient(135deg, var(--blue), var(--mauve)); color: #1e1e2e; }
-    .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(137,180,250,0.3); }
-    .btn-secondary { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
-    .btn-secondary:hover { background: var(--border); }
-    .btn-success { background: linear-gradient(135deg, var(--green), #39d353); color: #1e1e2e; }
-    .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    .btn-primary { background: var(--accent); color: var(--accent-fg); }
+    .btn-primary:hover { opacity: 0.8; }
+    .btn-secondary { background: transparent; color: var(--text); border: 1px solid var(--border); }
+    .btn-secondary:hover { border-color: var(--text); }
+    .btn-success { background: var(--accent); color: var(--accent-fg); }
+    .btn:disabled { opacity: 0.2; cursor: not-allowed; pointer-events: none; }
 
     /* All green state */
     .all-green {
-      text-align: center; padding: 40px;
-      background: var(--surface); border-radius: 16px;
-      border: 1px solid rgba(166,227,161,0.3); display: none;
+      text-align: left; padding: 40px;
+      background: transparent;
+      border: 1px solid var(--border); display: none;
     }
     .all-green.visible { display: block; }
-    .all-green .icon { font-size: 64px; margin-bottom: 16px; }
-    .all-green h2 { color: var(--green); font-size: 24px; margin-bottom: 8px; }
-    .all-green p { color: var(--subtext); font-size: 14px; }
+    .all-green .icon { display: none; }
+    .all-green h2 { color: var(--text); font-size: 20px; font-weight: 400; margin-bottom: 12px; }
+    .all-green p { color: var(--subtext); font-size: 14px; line-height: 1.5; }
 
     .spin { animation: spin 1s linear infinite; display: inline-block; }
     @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
     /* Disk/time estimates */
-    .estimates { display: flex; gap: 16px; margin-bottom: 20px; }
-    .estimate-card { background: var(--surface); border-radius: 8px; padding: 12px 16px; flex: 1; border: 1px solid var(--border); }
-    .estimate-label { color: var(--subtext); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
-    .estimate-value { font-size: 20px; font-weight: 700; color: var(--blue); margin-top: 4px; }
+    .estimates { display: flex; gap: 1px; margin-bottom: 32px; background: var(--border); border: 1px solid var(--border); }
+    .estimate-card { background: var(--bg); padding: 20px; flex: 1; }
+    .estimate-label { color: var(--subtext); font-size: 12px; margin-bottom: 8px; }
+    .estimate-value { font-size: 16px; font-weight: 500; color: var(--text); font-family: monospace; }
   </style>
 </head>
 <body>
   <div class="header">
     <div class="logo">
-      <div class="logo-icon">⚡</div>
       <div>
         <h1>ESP Forge Setup</h1>
         <div class="subtitle">Installing Rust × ESP32 development environment</div>
@@ -131,39 +135,38 @@
   <div class="content">
     <!-- All systems go banner -->
     <div class="all-green" id="allGreen">
-      <div class="icon">✅</div>
       <h2>All systems go!</h2>
       <p>Your ESP Forge environment is fully configured and ready.<br>Open or create a project to start building.</p>
-      <button class="btn btn-success" style="margin: 16px auto 0; display: inline-flex" onclick="createProject()">
-        🚀 Create New Project
+      <button class="btn btn-success" style="margin-top: 24px; display: inline-flex" onclick="createProject()">
+        Create New Project
       </button>
     </div>
 
     <div id="mainContent">
       <!-- Summary -->
       <div class="summary-bar" id="summaryBar">
-        <span style="font-weight:600;margin-right:4px">Dependency Check</span>
-        <div class="summary-stat"><div class="badge badge-ok" id="okCount">—</div> installed</div>
-        <div class="summary-stat"><div class="badge badge-bad" id="missingCount">—</div> missing</div>
+        <span style="font-weight:500;margin-right:8px;color:var(--text);">Dependency Check</span>
+        <div class="summary-stat"><span class="badge badge-ok" id="okCount">—</span> installed</div>
+        <div class="summary-stat"><span class="badge badge-bad" id="missingCount">—</span> missing</div>
         <div class="summary-stat"><span class="spin" id="checking" style="display:none">⟳</span></div>
       </div>
 
       <!-- Estimates -->
       <div class="estimates">
         <div class="estimate-card">
-          <div class="estimate-label">⏱ Estimated Time</div>
+          <div class="estimate-label">Estimated Time</div>
           <div class="estimate-value" id="estimateTime">~10 min</div>
         </div>
         <div class="estimate-card">
-          <div class="estimate-label">💾 Disk Space Needed</div>
+          <div class="estimate-label">Disk Space Needed</div>
           <div class="estimate-value" id="estimateDisk">~3 GB</div>
         </div>
       </div>
 
       <!-- Checklist -->
       <div class="check-grid" id="checkGrid">
-        <div style="color:var(--subtext);text-align:center;padding:40px">
-          <span class="spin">⟳</span> Running dependency check...
+        <div style="color:var(--subtext);text-align:center;padding:40px;background:var(--bg);">
+          <span class="spin">⟳</span> Scanning system...
         </div>
       </div>
 
@@ -178,13 +181,13 @@
       <!-- Buttons -->
       <div class="button-row">
         <button class="btn btn-primary" id="btnInstallAll" onclick="installAll()" disabled>
-          ⚡ Install Everything
+          Install Everything
         </button>
         <button class="btn btn-secondary" id="btnInstallSelected" onclick="installSelected()" disabled>
-          ✓ Install Selected
+          Install Selected
         </button>
         <button class="btn btn-secondary" onclick="runCheck()">
-          🔍 Re-check
+          Re-check
         </button>
       </div>
     </div>
@@ -197,7 +200,7 @@
 
     function runCheck() {
       document.getElementById('checking').style.display = 'inline';
-      document.getElementById('checkGrid').innerHTML = '<div style="color:var(--subtext);text-align:center;padding:40px"><span class="spin">⟳</span> Scanning system...</div>';
+      document.getElementById('checkGrid').innerHTML = '<div style="color:var(--subtext);text-align:center;padding:40px;background:var(--bg);"><span class="spin">⟳</span> Scanning system...</div>';
       vscode.postMessage({ command: 'run-check' });
     }
 
@@ -257,12 +260,12 @@
 
       const rows = result.items.map(item => {
         const isOk = item.status === 'ok';
-        const icon = isOk ? '✅' : '❌';
+        const icon = isOk ? '[OK]' : '[XX]';
         const cls = isOk ? 'ok' : 'missing';
         const ver = item.version ? `<div class="check-version">${item.version}</div>` : '';
         const checkbox = !isOk ? `<div class="check-select"><input type="checkbox" class="item-checkbox" data-id="${item.id}" checked></div>` : '';
-        return `<div class="check-item ${cls}">
-          <div class="check-icon">${icon}</div>
+        return `<div class="check-item">
+          <div class="check-icon ${cls}">${icon}</div>
           <div class="check-info">
             <div class="check-name">${item.label}</div>
             <div class="check-desc">${item.description}</div>

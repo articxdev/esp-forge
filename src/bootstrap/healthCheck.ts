@@ -168,13 +168,17 @@ export class HealthCheck {
         case "riscv-target":
           return await this.checkRustTarget(item, "riscv32imc-esp-espidf");
         case "python3":
-          return await this.checkCommand(
+          return await this.checkCommandsFallback(
             item,
-            this.platform.isWindows ? "python" : "python3",
+            ["python3", "python", "py"],
             ["--version"]
           );
         case "git":
-          return await this.checkCommand(item, "git", ["--version"]);
+          return await this.checkCommandsFallback(
+            item,
+            ["git", "git.exe"],
+            ["--version"]
+          );
         case "libusb":
           return await this.checkLibusb(item);
         case "xcode-cli":
@@ -202,6 +206,23 @@ export class HealthCheck {
     } catch {
       return { ...item, status: "missing" };
     }
+  }
+
+  private async checkCommandsFallback(
+    item: HealthItem,
+    cmds: string[],
+    args: string[]
+  ): Promise<HealthItem> {
+    for (const cmd of cmds) {
+      try {
+        const result = await this.runner.runSilent(cmd, args);
+        const version = result.stdout.trim().split("\n")[0] ?? "";
+        return { ...item, status: "ok", version };
+      } catch {
+        // Continue to next fallback
+      }
+    }
+    return { ...item, status: "missing" };
   }
 
   private async checkRustTarget(item: HealthItem, target: string): Promise<HealthItem> {

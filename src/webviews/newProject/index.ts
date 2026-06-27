@@ -225,35 +225,9 @@ async fn main(_spawner: Spawner) {
 }
 `;
       case "bare-metal":
-        return `#![no_std]
-#![no_main]
-
-use esp_backtrace as _;
-use esp_hal::{
-    clock::ClockControl,
-    delay::Delay,
-    gpio::Io,
-    peripherals::Peripherals,
-    prelude::*,
-    system::SystemControl,
-};
-
-#[entry]
-fn main() -> ! {
-    let peripherals = Peripherals::take();
-    let system = SystemControl::new(peripherals.SYSTEM);
-    let clocks = ClockControl::max(system.clock_control).freeze();
-    let delay = Delay::new(&clocks);
-    let io = Io::new(peripherals.GPIO, peripherals.IO_MUX);
-
-    esp_println::println!("ESP Forge: Bare metal starting...");
-
-    loop {
-        esp_println::println!("Running...");
-        delay.delay_millis(1000u32);
-    }
-}
-`;
+      case "no-std-minimal":
+        // Fallback or deprecated options map to embassy
+        return this.getMainRs("embassy-async", features);
       default: // esp-idf-std
         return `use esp_idf_svc::sys::EspError;
 
@@ -283,8 +257,6 @@ ${hasWifi ? `
     template: string,
     features: string[]
   ): string {
-    const isNoStd = template === "bare-metal" || template === "embassy-async" || template === "no-std-minimal";
-
     if (template === "embassy-async") {
       return `[package]
 name = "${name}"
@@ -307,26 +279,13 @@ bench = false
     }
 
     if (template === "bare-metal" || template === "no-std-minimal") {
-      return `[package]
-name = "${name}"
-version = "0.1.0"
-edition = "2021"
-
-[dependencies]
-esp-hal = { version = "0.18", features = ["${chip}"] }
-esp-backtrace = { version = "0.13", features = ["${chip}", "exception-handler", "panic-handler", "println"] }
-esp-println = { version = "0.10", features = ["${chip}", "log"] }
-
-[[bin]]
-name = "${name}"
-test = false
-bench = false
-`;
+      // Fallback or deprecated options map to embassy
+      return this.getCargoToml("embassy-async", name, chip, features);
     }
 
+
     // esp-idf-std
-    const wifiDeps = features.includes("wifi") ? `
-esp-idf-svc = { version = "0.48", features = ["wifi"] }` : "";
+    const svcFeatures = features.includes("wifi") ? `, features = ["wifi"]` : "";
 
     return `[package]
 name = "${name}"
@@ -334,9 +293,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-esp-idf-svc = { version = "0.48" }
+esp-idf-svc = { version = "0.48"${svcFeatures} }
 log = "0.4"
-${wifiDeps}
 
 [build-dependencies]
 embuild = "0.31"

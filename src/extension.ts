@@ -79,6 +79,10 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   // Set up USB detection
   setupUsbDetection(context, flashManager, sidebarProvider, statusBarProvider);
 
+  // Register disposable managers to clean up on deactivation
+  context.subscriptions.push({ dispose: () => debugManager.dispose() });
+  context.subscriptions.push({ dispose: () => serialMonitor.dispose() });
+
   const activationTime = Date.now() - activationStart;
   outputChannel.appendLine(`[ESP Forge] Activated in ${activationTime}ms`);
 

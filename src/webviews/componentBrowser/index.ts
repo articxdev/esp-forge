@@ -271,9 +271,23 @@ function buildPartitionEditorHtml(partitions: Partition[]): string {
   const vscode = acquireVsCodeApi();
   let partitions = ${JSON.stringify(partitions)};
   function updatePartition(i, key, val) { partitions[i][key] = val; }
-  function deleteRow(i) { partitions.splice(i,1); location.reload(); }
-  function addRow() { partitions.push({ name:'new_part', type:'data', subtype:'fat', offset:'', size:'1M' }); location.reload(); }
+  function deleteRow(i) { partitions.splice(i,1); renderTable(); }
+  function addRow() { partitions.push({ name:'new_part', type:'data', subtype:'fat', offset:'', size:'1M' }); renderTable(); }
   function save() { vscode.postMessage({ command:'save', partitions }); }
+  function renderTable() {
+    const tbody = document.getElementById('tbody');
+    tbody.innerHTML = partitions.map((p, i) => \`<tr>
+      <td><input class="cell-input" value="\${p.name}" onchange="updatePartition(\${i}, 'name', this.value)"></td>
+      <td><select class="cell-select" onchange="updatePartition(\${i}, 'type', this.value)">
+        <option \${p.type === 'app' ? 'selected' : ''}>app</option>
+        <option \${p.type === 'data' ? 'selected' : ''}>data</option>
+      </select></td>
+      <td><input class="cell-input" value="\${p.subtype}" onchange="updatePartition(\${i}, 'subtype', this.value)"></td>
+      <td><input class="cell-input" value="\${p.offset}" onchange="updatePartition(\${i}, 'offset', this.value)"></td>
+      <td><input class="cell-input" value="\${p.size}" onchange="updatePartition(\${i}, 'size', this.value)"></td>
+      <td><button class="btn-del" onclick="deleteRow(\${i})">✕</button></td>
+    </tr>\`).join('');
+  }
 </script>
 </body></html>`;
 }

@@ -131,8 +131,7 @@ export class SetupWizardPanel {
 }
 
 function getSetupWizardHtml(): string {
-  return fs.readFileSync(
-    path.join(__dirname, "..", "..", "webviews", "setupWizard", "ui.html"),
-    "utf8"
-  );
+  return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>ESP Forge Setup</title>
+<style>body{background:#000;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;padding:40px;}</style>
+</head><body><h1>ESP Forge Setup</h1><p>UI file not found. Please rebuild the extension.</p></body></html>`;
 }

@@ -7,6 +7,8 @@ export class StatusBarProvider {
   private readonly portItem: vscode.StatusBarItem;
   private readonly profileItem: vscode.StatusBarItem;
   private readonly statusItem: vscode.StatusBarItem;
+  private readonly flashItem: vscode.StatusBarItem;
+  private readonly monitorItem: vscode.StatusBarItem;
   private buildStartTime: number | undefined;
 
   constructor(
@@ -20,8 +22,10 @@ export class StatusBarProvider {
     this.portItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, priority + 2);
     this.profileItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, priority + 1);
     this.statusItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, priority);
+    this.flashItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, priority - 1);
+    this.monitorItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, priority - 2);
 
-    context.subscriptions.push(this.chipItem, this.portItem, this.profileItem, this.statusItem);
+    context.subscriptions.push(this.chipItem, this.portItem, this.profileItem, this.statusItem, this.flashItem, this.monitorItem);
   }
 
   initialize(): void {
@@ -29,6 +33,8 @@ export class StatusBarProvider {
     this.portItem.command = "espforge.selectPort";
     this.profileItem.command = "espforge.toggleProfile";
     this.statusItem.command = "espforge.build";
+    this.flashItem.command = "espforge.flash";
+    this.monitorItem.command = "espforge.monitor";
 
     this.refresh();
   }
@@ -45,6 +51,8 @@ export class StatusBarProvider {
       this.portItem.hide();
       this.profileItem.hide();
       this.statusItem.hide();
+      this.flashItem.hide();
+      this.monitorItem.hide();
       return;
     }
 
@@ -66,10 +74,18 @@ export class StatusBarProvider {
     this.profileItem.tooltip = `Build Profile: ${profile}\nClick to toggle`;
     this.profileItem.show();
 
-    this.statusItem.text = "$(check) Ready";
-    this.statusItem.tooltip = "ESP Forge: Ready. Click to build.";
+    this.statusItem.text = "$(check) Build";
+    this.statusItem.tooltip = "ESP Forge: Click to build project.";
     this.statusItem.backgroundColor = undefined;
     this.statusItem.show();
+
+    this.flashItem.text = "$(zap) Flash";
+    this.flashItem.tooltip = "ESP Forge: Flash to device";
+    this.flashItem.show();
+
+    this.monitorItem.text = "$(terminal) Monitor";
+    this.monitorItem.tooltip = "ESP Forge: Open Serial Monitor";
+    this.monitorItem.show();
   }
 
   setBuilding(): void {

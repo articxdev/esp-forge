@@ -51,20 +51,16 @@ export class FlashManager {
       return;
     }
 
-    const target = CHIP_TARGET_MAP[project.config.project.chip];
+    const chip = project.config.project.chip;
     const args = [
       "espflash",
       "flash",
-      "--target",
-      target,
+      "--chip",
+      chip,
       "--port",
       port,
       "--speed",
-      String(project.config.flash.speed),
-      "--before",
-      project.config.flash.before,
-      "--after",
-      project.config.flash.after
+      String(project.config.flash.speed)
     ];
 
     if (project.config.build.profile === "release") {

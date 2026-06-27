@@ -123,7 +123,7 @@ export class CargoRunner {
     );
   }
 
-  async check(project: EspProject): Promise<void> {
+  async check(project: EspProject, token?: vscode.CancellationToken): Promise<void> {
     const target = CHIP_TARGET_MAP[project.config.project.chip];
     const args = [
       "check",
@@ -151,7 +151,8 @@ export class CargoRunner {
           const json = JSON.parse(line) as CargoJsonLine;
           this.handleCargoLine(json, project, undefined);
         } catch { /* skip */ }
-      }
+      },
+      token
     );
   }
 
@@ -168,8 +169,10 @@ export class CargoRunner {
       // Cancel any previous check
       this.cancelToken?.cancel();
       this.cancelToken = new vscode.CancellationTokenSource();
-      this.check(project).catch((err) => {
-        this.output.appendLine(`[CargoRunner] Check failed: ${String(err)}`);
+      this.check(project, this.cancelToken.token).catch((err) => {
+        if (!(err instanceof vscode.CancellationError)) {
+          this.output.appendLine(`[CargoRunner] Check failed: ${String(err)}`);
+        }
       });
     }, debounceMs);
   }

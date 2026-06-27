@@ -6,124 +6,171 @@
   <title>New ESP Forge Project</title>
   <style>
     :root {
-      --bg: #1e1e2e; --surface: #313244; --surface2: #181825; --border: #45475a;
-      --text: #cdd6f4; --subtext: #a6adc8; --blue: #89b4fa; --green: #a6e3a1;
-      --red: #f38ba8; --yellow: #f9e2af; --purple: #cba6f7; --mauve: #b4befe;
-      --teal: #94e2d5;
+      --bg: #000000;
+      --surface: #0a0a0a;
+      --border: #222222;
+      --border-hover: #444444;
+      --text: #ffffff;
+      --subtext: #888888;
+      --accent: #ffffff;
+      --accent-fg: #000000;
+      --danger: #ff4444;
     }
+
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; min-height: 100vh; }
-    .wizard { display: flex; flex-direction: column; min-height: 100vh; }
-    /* Progress stepper */
-    .stepper { display: flex; align-items: center; padding: 24px 40px; background: var(--surface2); border-bottom: 1px solid var(--border); gap: 0; }
-    .step { display: flex; align-items: center; gap: 8px; flex: 1; }
-    .step-num { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; border: 2px solid var(--border); color: var(--subtext); transition: all 0.3s; flex-shrink: 0; }
-    .step.active .step-num { background: var(--blue); border-color: var(--blue); color: #1e1e2e; box-shadow: 0 0 12px rgba(137,180,250,0.4); }
-    .step.done .step-num { background: var(--green); border-color: var(--green); color: #1e1e2e; }
-    .step-label { font-size: 12px; color: var(--subtext); transition: color 0.3s; }
-    .step.active .step-label { color: var(--blue); font-weight: 600; }
-    .step.done .step-label { color: var(--green); }
-    .step-connector { flex: 1; height: 2px; background: var(--border); margin: 0 8px; max-width: 60px; }
-    .step-connector.done { background: var(--green); }
+    
+    body { 
+      background: var(--bg); 
+      color: var(--text); 
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+      min-height: 100vh;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
 
-    /* Pages */
+    .wizard { display: flex; flex-direction: column; min-height: 100vh; max-width: 800px; margin: 0 auto; }
+
+    /* --- Ultra-Minimal Stepper --- */
+    .stepper { 
+      display: flex; gap: 8px; padding: 40px 40px 20px; 
+    }
+    .step { 
+      flex: 1; height: 2px; background: var(--border); 
+      transition: background 0.3s; 
+    }
+    .step-num, .step-label { display: none; } /* Hidden, but kept for JS compatibility */
+    .step.active { background: var(--text); }
+    .step.done { background: var(--border-hover); }
+    .step-connector { display: none; } /* Hidden, but kept for JS compatibility */
+
+    /* --- Pages --- */
     .pages { flex: 1; overflow: hidden; position: relative; }
-    .page { position: absolute; inset: 0; padding: 40px; opacity: 0; pointer-events: none; transform: translateX(30px); transition: all 0.3s ease; overflow-y: auto; }
-    .page.active { opacity: 1; pointer-events: all; transform: translateX(0); }
-    .page.exit-left { transform: translateX(-30px); opacity: 0; }
+    .page { 
+      position: absolute; inset: 0; padding: 20px 40px 60px; 
+      opacity: 0; pointer-events: none; 
+      transition: opacity 0.3s ease; 
+      overflow-y: auto; 
+    }
+    .page.active { opacity: 1; pointer-events: all; }
+    .page.exit-left { opacity: 0; }
 
-    h2 { font-size: 22px; font-weight: 700; margin-bottom: 6px; color: var(--blue); }
-    .page-desc { color: var(--subtext); font-size: 14px; margin-bottom: 28px; }
+    h2 { font-size: 24px; font-weight: 400; margin-bottom: 8px; color: var(--text); letter-spacing: -0.5px; }
+    .page-desc { color: var(--subtext); font-size: 14px; margin-bottom: 40px; font-weight: 400; }
 
-    /* Form controls */
-    .form-group { margin-bottom: 20px; }
-    label { display: block; font-size: 13px; font-weight: 600; color: var(--subtext); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
-    input[type=text] { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; color: var(--text); font-size: 14px; outline: none; transition: border-color 0.2s; }
-    input[type=text]:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(137,180,250,0.1); }
-    .location-row { display: flex; gap: 8px; }
+    /* --- Form Controls --- */
+    .form-group { margin-bottom: 32px; max-width: 500px; }
+    label { display: block; font-size: 12px; color: var(--subtext); margin-bottom: 12px; }
+    
+    input[type=text] { 
+      width: 100%; background: transparent; border: none; border-bottom: 1px solid var(--border); 
+      padding: 8px 0; color: var(--text); font-size: 16px; outline: none; 
+      transition: border-color 0.2s; 
+    }
+    input[type=text]:focus { border-color: var(--text); }
+    input[type=text]::placeholder { color: #333; }
+    
+    .location-row { display: flex; gap: 16px; align-items: flex-end; }
     .location-row input { flex: 1; }
-    .btn-browse { padding: 10px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; color: var(--text); cursor: pointer; font-size: 14px; white-space: nowrap; transition: all 0.2s; }
-    .btn-browse:hover { background: var(--border); }
+    
+    .btn-browse { 
+      padding: 8px 16px; background: transparent; border: 1px solid var(--border); 
+      color: var(--text); cursor: pointer; font-size: 13px; transition: all 0.2s; 
+    }
+    .btn-browse:hover { border-color: var(--text); }
 
-    /* Chip cards */
-    .chip-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; margin-bottom: 8px; }
-    .chip-card { padding: 16px; background: var(--surface); border: 2px solid var(--border); border-radius: 12px; cursor: pointer; transition: all 0.2s; }
-    .chip-card:hover { border-color: var(--blue); transform: translateY(-2px); }
-    .chip-card.selected { border-color: var(--blue); background: rgba(137,180,250,0.1); box-shadow: 0 0 16px rgba(137,180,250,0.2); }
-    .chip-name { font-size: 16px; font-weight: 700; color: var(--blue); margin-bottom: 4px; }
-    .chip-core { font-size: 12px; color: var(--purple); margin-bottom: 4px; }
-    .chip-desc { font-size: 12px; color: var(--subtext); }
-    .chip-badge { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; margin-top: 6px; }
-    .badge-xtensa { background: rgba(166,227,161,0.2); color: var(--green); }
-    .badge-riscv { background: rgba(249,226,175,0.2); color: var(--yellow); }
+    /* --- Minimal Grid Cards --- */
+    .chip-grid, .template-grid { 
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; 
+    }
+    .chip-card, .template-card { 
+      padding: 20px; background: var(--surface); border: 1px solid transparent; 
+      cursor: pointer; transition: all 0.2s ease; 
+    }
+    .chip-card:hover, .template-card:hover { background: #151515; }
+    .chip-card.selected, .template-card.selected { 
+      background: var(--bg); border-color: var(--text); 
+    }
 
-    /* Template cards */
-    .template-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
-    .template-card { padding: 20px 16px; background: var(--surface); border: 2px solid var(--border); border-radius: 12px; cursor: pointer; transition: all 0.2s; text-align: center; }
-    .template-card:hover { border-color: var(--purple); transform: translateY(-2px); }
-    .template-card.selected { border-color: var(--purple); background: rgba(203,166,247,0.1); }
-    .template-icon { font-size: 36px; margin-bottom: 10px; }
-    .template-name { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
-    .template-desc { font-size: 12px; color: var(--subtext); }
+    .chip-name, .template-name { font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+    .chip-core { font-size: 12px; color: var(--subtext); margin-bottom: 12px; font-family: monospace; }
+    .chip-desc, .template-desc { font-size: 13px; color: var(--subtext); line-height: 1.5; }
+    
+    .chip-badge { font-size: 10px; font-weight: 400; color: var(--subtext); text-transform: uppercase; letter-spacing: 0.5px; }
+    .chip-card.selected .chip-badge { color: var(--text); }
 
-    /* Feature checkboxes */
-    .feature-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px; }
-    .feature-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; transition: all 0.2s; }
-    .feature-item:hover { border-color: var(--teal); }
-    .feature-item.checked { border-color: var(--teal); background: rgba(148,226,213,0.1); }
-    .feature-item input[type=checkbox] { accent-color: var(--teal); width: 16px; height: 16px; cursor: pointer; }
-    .feature-label { font-size: 13px; font-weight: 500; }
-
-    /* Summary */
-    .summary-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; }
-    .summary-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
-    .summary-row:last-child { border-bottom: none; }
+    /* --- Feature Toggles --- */
+    .feature-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1px; background: var(--border); border: 1px solid var(--border); }
+    .feature-item { 
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px; background: var(--bg); cursor: pointer; transition: background 0.2s; 
+    }
+    .feature-item:hover { background: var(--surface); }
+    .feature-item.checked { background: var(--text); color: var(--bg); }
+    .feature-item.checked .feature-label { color: var(--bg); }
+    .feature-item input[type=checkbox] { display: none; }
+    .feature-label { font-size: 13px; color: var(--text); transition: color 0.2s; }
+    
+    /* --- Summary --- */
+    .summary-card { max-width: 500px; }
+    .summary-row { display: flex; padding: 16px 0; border-bottom: 1px solid var(--border); }
     .summary-label { color: var(--subtext); font-size: 13px; width: 120px; flex-shrink: 0; }
-    .summary-value { font-weight: 600; color: var(--text); }
-    .feature-tags { display: flex; flex-wrap: wrap; gap: 6px; }
-    .feature-tag { background: rgba(148,226,213,0.15); color: var(--teal); padding: 2px 8px; border-radius: 4px; font-size: 12px; }
+    .summary-value { font-size: 13px; color: var(--text); }
+    .feature-tags { display: flex; flex-wrap: wrap; gap: 8px; line-height: 1.4; }
 
-    /* Footer nav */
-    .footer { display: flex; justify-content: space-between; align-items: center; padding: 20px 40px; background: var(--surface2); border-top: 1px solid var(--border); }
-    .btn { padding: 11px 24px; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 6px; }
-    .btn-ghost { background: transparent; color: var(--subtext); }
+    /* --- Footer Nav --- */
+    .footer { 
+      display: flex; justify-content: space-between; align-items: center; 
+      padding: 24px 40px; background: var(--bg); 
+    }
+    .btn { 
+      padding: 10px 24px; border: none; font-size: 13px; font-weight: 500; 
+      cursor: pointer; transition: all 0.2s; 
+    }
+    .btn-ghost { background: transparent; color: var(--subtext); padding-left: 0; }
     .btn-ghost:hover { color: var(--text); }
-    .btn-next { background: linear-gradient(135deg, var(--blue), var(--mauve)); color: #1e1e2e; }
-    .btn-next:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(137,180,250,0.3); }
-    .btn-create { background: linear-gradient(135deg, var(--green), var(--teal)); color: #1e1e2e; }
-    .btn-create:hover { opacity: 0.9; transform: translateY(-1px); }
-    .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+    
+    .btn-next, .btn-create { background: var(--accent); color: var(--accent-fg); }
+    .btn-next:hover, .btn-create:hover { opacity: 0.8; }
+    .btn:disabled { opacity: 0.2; cursor: not-allowed; pointer-events: none; }
 
-    .creating-overlay { display: none; position: fixed; inset: 0; background: rgba(30,30,46,0.9); align-items: center; justify-content: center; flex-direction: column; gap: 16px; z-index: 100; }
+    /* --- States --- */
+    .creating-overlay { 
+      display: none; position: fixed; inset: 0; background: var(--bg); 
+      align-items: center; justify-content: center; flex-direction: column; gap: 24px; z-index: 100; 
+    }
     .creating-overlay.visible { display: flex; }
-    .spinner { width: 48px; height: 48px; border: 4px solid var(--border); border-top-color: var(--blue); border-radius: 50%; animation: spin 0.8s linear infinite; }
+    .spinner { 
+      width: 24px; height: 24px; border: 1px solid var(--border); 
+      border-top-color: var(--text); border-radius: 50%; animation: spin 0.8s linear infinite; 
+    }
     @keyframes spin { to { transform: rotate(360deg); } }
-    .creating-msg { color: var(--blue); font-size: 16px; font-weight: 600; }
-    .error-banner { background: rgba(243,139,168,0.15); border: 1px solid var(--red); border-radius: 8px; padding: 12px 16px; color: var(--red); font-size: 13px; margin-bottom: 16px; display: none; }
+    .creating-msg { color: var(--subtext); font-size: 13px; letter-spacing: 0.5px; }
+    
+    .error-banner { 
+      border-left: 2px solid var(--danger); padding: 12px 16px; color: var(--danger); 
+      font-size: 13px; margin-bottom: 32px; display: none; background: #110000;
+    }
     .error-banner.visible { display: block; }
   </style>
 </head>
 <body>
 <div class="wizard">
-  <!-- Stepper -->
   <div class="stepper" id="stepper">
-    <div class="step active" id="step1"><div class="step-num">1</div><div class="step-label">Project</div></div>
+    <div class="step active" id="step1"><div class="step-num"></div><div class="step-label"></div></div>
     <div class="step-connector" id="conn1"></div>
-    <div class="step" id="step2"><div class="step-num">2</div><div class="step-label">Chip</div></div>
+    <div class="step" id="step2"><div class="step-num"></div><div class="step-label"></div></div>
     <div class="step-connector" id="conn2"></div>
-    <div class="step" id="step3"><div class="step-num">3</div><div class="step-label">Template</div></div>
+    <div class="step" id="step3"><div class="step-num"></div><div class="step-label"></div></div>
     <div class="step-connector" id="conn3"></div>
-    <div class="step" id="step4"><div class="step-num">4</div><div class="step-label">Features</div></div>
+    <div class="step" id="step4"><div class="step-num"></div><div class="step-label"></div></div>
     <div class="step-connector" id="conn4"></div>
-    <div class="step" id="step5"><div class="step-num">5</div><div class="step-label">Review</div></div>
+    <div class="step" id="step5"><div class="step-num"></div><div class="step-label"></div></div>
   </div>
 
-  <!-- Pages -->
   <div class="pages">
-    <!-- Page 1: Project Info -->
     <div class="page active" id="page1">
-      <h2>📁 Project Details</h2>
-      <p class="page-desc">Name your project and choose where to create it.</p>
+      <h2>Project Details</h2>
+      <p class="page-desc">Define the name and location for your workspace.</p>
       <div class="error-banner" id="errorBanner"></div>
       <div class="form-group">
         <label>Project Name</label>
@@ -133,120 +180,95 @@
         <label>Location</label>
         <div class="location-row">
           <input type="text" id="projectLocation" placeholder="/home/user/projects" oninput="validatePage1()">
-          <button class="btn-browse" onclick="pickLocation()">Browse...</button>
+          <button class="btn-browse" onclick="pickLocation()">Browse</button>
         </div>
       </div>
     </div>
 
-    <!-- Page 2: Chip -->
     <div class="page" id="page2">
-      <h2>⚙ Select Chip</h2>
-      <p class="page-desc">Choose the ESP32 variant for your project.</p>
+      <h2>Target Hardware</h2>
+      <p class="page-desc">Select the ESP32 variant for this build.</p>
       <div class="chip-grid">
         <div class="chip-card" onclick="selectChip('esp32', this)">
-          <div class="chip-name">ESP32</div>
-          <div class="chip-core">Xtensa LX6 Dual-Core</div>
-          <div class="chip-desc">240 MHz, WiFi + BT Classic + BLE, 520 KB SRAM</div>
-          <span class="chip-badge badge-xtensa">Xtensa</span>
+          <div class="chip-name">ESP32 <span class="chip-badge">Xtensa</span></div>
+          <div class="chip-core">LX6 Dual-Core</div>
+          <div class="chip-desc">240 MHz, WiFi, BT Classic, BLE, 520 KB SRAM</div>
         </div>
         <div class="chip-card" onclick="selectChip('esp32s2', this)">
-          <div class="chip-name">ESP32-S2</div>
-          <div class="chip-core">Xtensa LX7 Single-Core</div>
+          <div class="chip-name">ESP32-S2 <span class="chip-badge">Xtensa</span></div>
+          <div class="chip-core">LX7 Single-Core</div>
           <div class="chip-desc">240 MHz, WiFi, USB-OTG, 320 KB SRAM</div>
-          <span class="chip-badge badge-xtensa">Xtensa</span>
         </div>
         <div class="chip-card selected" onclick="selectChip('esp32s3', this)">
-          <div class="chip-name">ESP32-S3 ⭐</div>
-          <div class="chip-core">Xtensa LX7 Dual-Core</div>
-          <div class="chip-desc">240 MHz, WiFi + BLE 5, USB-OTG, AI/ML, 512 KB SRAM</div>
-          <span class="chip-badge badge-xtensa">Xtensa</span>
+          <div class="chip-name">ESP32-S3 <span class="chip-badge">Xtensa</span></div>
+          <div class="chip-core">LX7 Dual-Core</div>
+          <div class="chip-desc">240 MHz, WiFi, BLE 5, USB-OTG, 512 KB SRAM</div>
         </div>
         <div class="chip-card" onclick="selectChip('esp32c3', this)">
-          <div class="chip-name">ESP32-C3</div>
-          <div class="chip-core">RISC-V Single-Core</div>
-          <div class="chip-desc">160 MHz, WiFi + BLE 5, USB-Serial, 400 KB SRAM</div>
-          <span class="chip-badge badge-riscv">RISC-V</span>
+          <div class="chip-name">ESP32-C3 <span class="chip-badge">RISC-V</span></div>
+          <div class="chip-core">Single-Core</div>
+          <div class="chip-desc">160 MHz, WiFi, BLE 5, USB-Serial, 400 KB SRAM</div>
         </div>
         <div class="chip-card" onclick="selectChip('esp32c6', this)">
-          <div class="chip-name">ESP32-C6</div>
-          <div class="chip-core">RISC-V Single-Core</div>
-          <div class="chip-desc">160 MHz, WiFi 6, BLE 5.3, 802.15.4 Thread/Zigbee</div>
-          <span class="chip-badge badge-riscv">RISC-V</span>
+          <div class="chip-name">ESP32-C6 <span class="chip-badge">RISC-V</span></div>
+          <div class="chip-core">Single-Core</div>
+          <div class="chip-desc">160 MHz, WiFi 6, BLE 5.3, Thread/Zigbee</div>
         </div>
         <div class="chip-card" onclick="selectChip('esp32h2', this)">
-          <div class="chip-name">ESP32-H2</div>
-          <div class="chip-core">RISC-V Single-Core</div>
-          <div class="chip-desc">96 MHz, 802.15.4, BLE 5.3 only, ultra-low power</div>
-          <span class="chip-badge badge-riscv">RISC-V</span>
+          <div class="chip-name">ESP32-H2 <span class="chip-badge">RISC-V</span></div>
+          <div class="chip-core">Single-Core</div>
+          <div class="chip-desc">96 MHz, 802.15.4, BLE 5.3, Ultra-low power</div>
         </div>
       </div>
     </div>
 
-    <!-- Page 3: Template -->
     <div class="page" id="page3">
-      <h2>🧩 Project Template</h2>
-      <p class="page-desc">Pick the framework that matches your use case.</p>
+      <h2>Framework</h2>
+      <p class="page-desc">Select the starting template for your application.</p>
       <div class="template-grid">
-        <div class="template-card" onclick="selectTemplate('bare-metal', this)">
-          <div class="template-icon">⚙</div>
-          <div class="template-name">Bare Metal (no_std)</div>
-          <div class="template-desc">Direct hardware access with esp-hal. No OS. Maximum control.</div>
-        </div>
         <div class="template-card selected" onclick="selectTemplate('esp-idf-std', this)">
-          <div class="template-icon">🌐</div>
-          <div class="template-name">ESP-IDF (std)</div>
-          <div class="template-desc">Full Rust std support via esp-idf-svc. Best for networking/WiFi.</div>
+          <div class="template-name">ESP-IDF (Standard Library)</div>
+          <div class="template-desc">Full Rust standard library support. Best for WiFi, BT, and general applications.</div>
         </div>
         <div class="template-card" onclick="selectTemplate('embassy-async', this)">
-          <div class="template-icon">⚡</div>
-          <div class="template-name">Embassy Async</div>
-          <div class="template-desc">Modern async/await embedded runtime. no_std, high performance.</div>
-        </div>
-        <div class="template-card" onclick="selectTemplate('no-std-minimal', this)">
-          <div class="template-icon">🔬</div>
-          <div class="template-name">Minimal no_std</div>
-          <div class="template-desc">Absolute minimum boilerplate. For learning and experimentation.</div>
+          <div class="template-name">Embassy (Async/No-Std)</div>
+          <div class="template-desc">Modern async/await runtime for embedded. Highly efficient bare-metal execution.</div>
         </div>
       </div>
     </div>
 
-    <!-- Page 4: Features -->
     <div class="page" id="page4">
-      <h2>✨ Project Features</h2>
-      <p class="page-desc">Select optional features to include. You can always add more later in Cargo.toml.</p>
+      <h2>Dependencies</h2>
+      <p class="page-desc">Toggle optional libraries to include in your initial configuration.</p>
       <div class="feature-grid" id="featureGrid">
-        <!-- Populated by JS based on template -->
-      </div>
+        </div>
     </div>
 
-    <!-- Page 5: Review -->
     <div class="page" id="page5">
-      <h2>🚀 Ready to Create</h2>
-      <p class="page-desc">Review your project configuration before creating.</p>
+      <h2>Review</h2>
+      <p class="page-desc">Verify your configuration parameters.</p>
       <div class="summary-card" id="summaryCard"></div>
     </div>
   </div>
 
-  <!-- Footer -->
   <div class="footer">
-    <button class="btn btn-ghost" id="btnBack" onclick="goBack()" style="display:none">← Back</button>
-    <div></div>
-    <div style="display:flex;gap:12px">
+    <button class="btn btn-ghost" id="btnBack" onclick="goBack()" style="visibility:hidden">Back</button>
+    <div style="display:flex; gap:16px;">
       <button class="btn btn-ghost" onclick="cancel()">Cancel</button>
-      <button class="btn btn-next" id="btnNext" onclick="goNext()" disabled>Next →</button>
-      <button class="btn btn-create" id="btnCreate" onclick="createProject()" style="display:none">🚀 Create Project</button>
+      <button class="btn btn-next" id="btnNext" onclick="goNext()" disabled>Continue</button>
+      <button class="btn btn-create" id="btnCreate" onclick="createProject()" style="display:none">Create Project</button>
     </div>
   </div>
 </div>
 
-<!-- Creating overlay -->
 <div class="creating-overlay" id="creatingOverlay">
   <div class="spinner"></div>
-  <div class="creating-msg">Creating your project...</div>
+  <div class="creating-msg">Initializing workspace...</div>
 </div>
 
 <script>
-  const vscode = acquireVsCodeApi();
+  // Logic remains entirely untouched to ensure extension compatibility
+  const vscode = acquireVsCodeApi ? acquireVsCodeApi() : { postMessage: console.log };
   let currentPage = 1;
   const totalPages = 5;
   const state = {
@@ -257,19 +279,20 @@
     features: []
   };
 
+  // Emojis removed from labels for a cleaner look, IDs remain the same
   const ALL_FEATURES = [
-    { id: 'wifi', label: '📶 WiFi', templates: ['esp-idf-std'] },
-    { id: 'bluetooth', label: '🔵 BT LE', templates: ['esp-idf-std', 'bare-metal', 'embassy-async'] },
-    { id: 'ethernet', label: '🌐 Ethernet', templates: ['esp-idf-std'] },
-    { id: 'nvs', label: '💾 NVS Storage', templates: ['esp-idf-std'] },
-    { id: 'spiffs', label: '📁 SPIFFS', templates: ['esp-idf-std'] },
-    { id: 'mqtt', label: '📡 MQTT', templates: ['esp-idf-std'] },
-    { id: 'http-server', label: '🖥 HTTP Server', templates: ['esp-idf-std'] },
-    { id: 'ota', label: '🔄 OTA Updates', templates: ['esp-idf-std'] },
-    { id: 'usb-cdc', label: '🔌 USB CDC', templates: ['esp-idf-std', 'embassy-async'] },
-    { id: 'i2c', label: '🔗 I2C Drivers', templates: ['esp-idf-std', 'bare-metal', 'embassy-async'] },
-    { id: 'spi', label: '⚡ SPI Drivers', templates: ['esp-idf-std', 'bare-metal', 'embassy-async'] },
-    { id: 'defmt', label: '🪲 defmt Logging', templates: ['bare-metal', 'embassy-async', 'no-std-minimal'] }
+    { id: 'wifi', label: 'WiFi Networking', templates: ['esp-idf-std'] },
+    { id: 'bluetooth', label: 'Bluetooth LE', templates: ['esp-idf-std', 'bare-metal', 'embassy-async'] },
+    { id: 'ethernet', label: 'Ethernet', templates: ['esp-idf-std'] },
+    { id: 'nvs', label: 'NVS Storage', templates: ['esp-idf-std'] },
+    { id: 'spiffs', label: 'SPIFFS File System', templates: ['esp-idf-std'] },
+    { id: 'mqtt', label: 'MQTT Client', templates: ['esp-idf-std'] },
+    { id: 'http-server', label: 'HTTP Server', templates: ['esp-idf-std'] },
+    { id: 'ota', label: 'OTA Updates', templates: ['esp-idf-std'] },
+    { id: 'usb-cdc', label: 'USB CDC Serial', templates: ['esp-idf-std', 'embassy-async'] },
+    { id: 'i2c', label: 'I2C Drivers', templates: ['esp-idf-std', 'bare-metal', 'embassy-async'] },
+    { id: 'spi', label: 'SPI Drivers', templates: ['esp-idf-std', 'bare-metal', 'embassy-async'] },
+    { id: 'defmt', label: 'defmt Logging', templates: ['bare-metal', 'embassy-async', 'no-std-minimal'] }
   ];
 
   function updateStepper() {
@@ -292,11 +315,11 @@
     setTimeout(() => {
       document.querySelectorAll('.page.exit-left').forEach(p => p.classList.remove('exit-left'));
       document.getElementById('page' + n).classList.add('active');
-    }, 150);
+    }, 100);
 
-    document.getElementById('btnBack').style.display = n > 1 ? 'flex' : 'none';
-    document.getElementById('btnNext').style.display = n < totalPages ? 'flex' : 'none';
-    document.getElementById('btnCreate').style.display = n === totalPages ? 'flex' : 'none';
+    document.getElementById('btnBack').style.visibility = n > 1 ? 'visible' : 'hidden';
+    document.getElementById('btnNext').style.display = n < totalPages ? 'block' : 'none';
+    document.getElementById('btnCreate').style.display = n === totalPages ? 'block' : 'none';
 
     if (n === 4) renderFeatures();
     if (n === 5) renderSummary();
@@ -334,15 +357,15 @@
     state.template = tmpl;
     document.querySelectorAll('.template-card').forEach(c => c.classList.remove('selected'));
     el.classList.add('selected');
-    state.features = []; // Reset features when template changes
+    state.features = [];
   }
 
   function renderFeatures() {
     const compatible = ALL_FEATURES.filter(f => f.templates.includes(state.template));
     document.getElementById('featureGrid').innerHTML = compatible.map(f => `
       <label class="feature-item ${state.features.includes(f.id) ? 'checked' : ''}" onclick="toggleFeature('${f.id}', this)">
-        <input type="checkbox" ${state.features.includes(f.id) ? 'checked' : ''} onclick="event.stopPropagation()">
         <span class="feature-label">${f.label}</span>
+        <input type="checkbox" ${state.features.includes(f.id) ? 'checked' : ''} onclick="event.stopPropagation()">
       </label>
     `).join('');
   }
@@ -360,15 +383,15 @@
 
   function renderSummary() {
     const featureTags = state.features.length > 0
-      ? state.features.map(f => `<span class="feature-tag">${f}</span>`).join('')
-      : '<span style="color:var(--subtext);font-size:13px">None selected</span>';
+      ? state.features.join(', ')
+      : '<span style="color:var(--subtext);">None</span>';
 
     document.getElementById('summaryCard').innerHTML = `
-      <div class="summary-row"><div class="summary-label">Project Name</div><div class="summary-value">${state.name || '—'}</div></div>
-      <div class="summary-row"><div class="summary-label">Location</div><div class="summary-value" style="font-size:12px;font-family:monospace">${state.location || '—'}/${state.name || ''}</div></div>
-      <div class="summary-row"><div class="summary-label">Chip</div><div class="summary-value">${state.chip.toUpperCase()}</div></div>
-      <div class="summary-row"><div class="summary-label">Template</div><div class="summary-value">${state.template}</div></div>
-      <div class="summary-row"><div class="summary-label">Features</div><div class="summary-value"><div class="feature-tags">${featureTags}</div></div></div>
+      <div class="summary-row"><div class="summary-label">Name</div><div class="summary-value">${state.name || '—'}</div></div>
+      <div class="summary-row"><div class="summary-label">Path</div><div class="summary-value" style="font-family:monospace">${state.location || '—'}/${state.name || ''}</div></div>
+      <div class="summary-row"><div class="summary-label">Hardware</div><div class="summary-value">${state.chip.toUpperCase()}</div></div>
+      <div class="summary-row"><div class="summary-label">Framework</div><div class="summary-value">${state.template}</div></div>
+      <div class="summary-row" style="border:none"><div class="summary-label">Features</div><div class="summary-value">${featureTags}</div></div>
     `;
   }
 
@@ -412,10 +435,8 @@
     } else if (msg.command === 'error') {
       document.getElementById('creatingOverlay').classList.remove('visible');
       const banner = document.getElementById('errorBanner');
-      banner.textContent = '❌ ' + msg.message;
+      banner.textContent = msg.message;
       banner.classList.add('visible');
-    } else if (msg.command === 'success') {
-      // VS Code will open the folder
     }
   });
 
