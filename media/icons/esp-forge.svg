@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <!-- Background circle -->
+  <circle cx="64" cy="64" r="60" fill="#1e1e2e"/>
+
+  <!-- Outer ring -->
+  <circle cx="64" cy="64" r="56" fill="none" stroke="#89b4fa" stroke-width="3" opacity="0.6"/>
+
+  <!-- Chip body -->
+  <rect x="32" y="32" width="64" height="64" rx="8" ry="8" fill="#313244" stroke="#89b4fa" stroke-width="2"/>
+
+  <!-- Chip inner highlight -->
+  <rect x="40" y="40" width="48" height="48" rx="4" ry="4" fill="#181825"/>
+
+  <!-- Chip pins - left -->
+  <rect x="20" y="44" width="12" height="6" rx="2" fill="#cba6f7"/>
+  <rect x="20" y="56" width="12" height="6" rx="2" fill="#cba6f7"/>
+  <rect x="20" y="68" width="12" height="6" rx="2" fill="#cba6f7"/>
+  <rect x="20" y="80" width="12" height="6" rx="2" fill="#cba6f7"/>
+
+  <!-- Chip pins - right -->
+  <rect x="96" y="44" width="12" height="6" rx="2" fill="#cba6f7"/>
+  <rect x="96" y="56" width="12" height="6" rx="2" fill="#cba6f7"/>
+  <rect x="96" y="68" width="12" height="6" rx="2" fill="#cba6f7"/>
+  <rect x="96" y="80" width="12" height="6" rx="2" fill="#cba6f7"/>
+
+  <!-- Chip pins - top -->
+  <rect x="44" y="20" width="6" height="12" rx="2" fill="#cba6f7"/>
+  <rect x="56" y="20" width="6" height="12" rx="2" fill="#cba6f7"/>
+  <rect x="68" y="20" width="6" height="12" rx="2" fill="#cba6f7"/>
+  <rect x="80" y="20" width="6" height="12" rx="2" fill="#cba6f7"/>
+
+  <!-- Chip pins - bottom -->
+  <rect x="44" y="96" width="6" height="12" rx="2" fill="#cba6f7"/>
+  <rect x="56" y="96" width="6" height="12" rx="2" fill="#cba6f7"/>
+  <rect x="68" y="96" width="6" height="12" rx="2" fill="#cba6f7"/>
+  <rect x="80" y="96" width="6" height="12" rx="2" fill="#cba6f7"/>
+
+  <!-- Ferris crab (simplified) inside chip -->
+  <!-- Body -->
+  <ellipse cx="64" cy="66" rx="14" ry="10" fill="#f38ba8"/>
+
+  <!-- Eyes -->
+  <circle cx="58" cy="60" r="3" fill="white"/>
+  <circle cx="70" cy="60" r="3" fill="white"/>
+  <circle cx="59" cy="60" r="1.5" fill="#1e1e2e"/>
+  <circle cx="71" cy="60" r="1.5" fill="#1e1e2e"/>
+
+  <!-- Claws -->
+  <path d="M50 62 Q44 56 47 64 Q44 72 50 70" fill="none" stroke="#f38ba8" stroke-width="3" stroke-linecap="round"/>
+  <path d="M78 62 Q84 56 81 64 Q84 72 78 70" fill="none" stroke="#f38ba8" stroke-width="3" stroke-linecap="round"/>
+
+  <!-- Legs -->
+  <line x1="52" y1="68" x2="46" y2="74" stroke="#f38ba8" stroke-width="2" stroke-linecap="round"/>
+  <line x1="56" y1="72" x2="52" y2="79" stroke="#f38ba8" stroke-width="2" stroke-linecap="round"/>
+  <line x1="76" y1="68" x2="82" y2="74" stroke="#f38ba8" stroke-width="2" stroke-linecap="round"/>
+  <line x1="72" y1="72" x2="76" y2="79" stroke="#f38ba8" stroke-width="2" stroke-linecap="round"/>
+
+  <!-- Lightning bolt accent -->
+  <path d="M61 43 L57 51 L62 51 L59 59 L66 49 L61 49 Z" fill="#f9e2af"/>
+</svg>

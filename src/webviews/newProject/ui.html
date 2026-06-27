@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline';">
+  <title>New ESP Forge Project</title>
+  <style>
+    :root {
+      --bg: #1e1e2e; --surface: #313244; --surface2: #181825; --border: #45475a;
+      --text: #cdd6f4; --subtext: #a6adc8; --blue: #89b4fa; --green: #a6e3a1;
+      --red: #f38ba8; --yellow: #f9e2af; --purple: #cba6f7; --mauve: #b4befe;
+      --teal: #94e2d5;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; min-height: 100vh; }
+    .wizard { display: flex; flex-direction: column; min-height: 100vh; }
+    /* Progress stepper */
+    .stepper { display: flex; align-items: center; padding: 24px 40px; background: var(--surface2); border-bottom: 1px solid var(--border); gap: 0; }
+    .step { display: flex; align-items: center; gap: 8px; flex: 1; }
+    .step-num { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; border: 2px solid var(--border); color: var(--subtext); transition: all 0.3s; flex-shrink: 0; }
+    .step.active .step-num { background: var(--blue); border-color: var(--blue); color: #1e1e2e; box-shadow: 0 0 12px rgba(137,180,250,0.4); }
+    .step.done .step-num { background: var(--green); border-color: var(--green); color: #1e1e2e; }
+    .step-label { font-size: 12px; color: var(--subtext); transition: color 0.3s; }
+    .step.active .step-label { color: var(--blue); font-weight: 600; }
+    .step.done .step-label { color: var(--green); }
+    .step-connector { flex: 1; height: 2px; background: var(--border); margin: 0 8px; max-width: 60px; }
+    .step-connector.done { background: var(--green); }
+
+    /* Pages */
+    .pages { flex: 1; overflow: hidden; position: relative; }
+    .page { position: absolute; inset: 0; padding: 40px; opacity: 0; pointer-events: none; transform: translateX(30px); transition: all 0.3s ease; overflow-y: auto; }
+    .page.active { opacity: 1; pointer-events: all; transform: translateX(0); }
+    .page.exit-left { transform: translateX(-30px); opacity: 0; }
+
+    h2 { font-size: 22px; font-weight: 700; margin-bottom: 6px; color: var(--blue); }
+    .page-desc { color: var(--subtext); font-size: 14px; margin-bottom: 28px; }
+
+    /* Form controls */
+    .form-group { margin-bottom: 20px; }
+    label { display: block; font-size: 13px; font-weight: 600; color: var(--subtext); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+    input[type=text] { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; color: var(--text); font-size: 14px; outline: none; transition: border-color 0.2s; }
+    input[type=text]:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(137,180,250,0.1); }
+    .location-row { display: flex; gap: 8px; }
+    .location-row input { flex: 1; }
+    .btn-browse { padding: 10px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; color: var(--text); cursor: pointer; font-size: 14px; white-space: nowrap; transition: all 0.2s; }
+    .btn-browse:hover { background: var(--border); }
+
+    /* Chip cards */
+    .chip-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; margin-bottom: 8px; }
+    .chip-card { padding: 16px; background: var(--surface); border: 2px solid var(--border); border-radius: 12px; cursor: pointer; transition: all 0.2s; }
+    .chip-card:hover { border-color: var(--blue); transform: translateY(-2px); }
+    .chip-card.selected { border-color: var(--blue); background: rgba(137,180,250,0.1); box-shadow: 0 0 16px rgba(137,180,250,0.2); }
+    .chip-name { font-size: 16px; font-weight: 700; color: var(--blue); margin-bottom: 4px; }
+    .chip-core { font-size: 12px; color: var(--purple); margin-bottom: 4px; }
+    .chip-desc { font-size: 12px; color: var(--subtext); }
+    .chip-badge { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; margin-top: 6px; }
+    .badge-xtensa { background: rgba(166,227,161,0.2); color: var(--green); }
+    .badge-riscv { background: rgba(249,226,175,0.2); color: var(--yellow); }
+
+    /* Template cards */
+    .template-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+    .template-card { padding: 20px 16px; background: var(--surface); border: 2px solid var(--border); border-radius: 12px; cursor: pointer; transition: all 0.2s; text-align: center; }
+    .template-card:hover { border-color: var(--purple); transform: translateY(-2px); }
+    .template-card.selected { border-color: var(--purple); background: rgba(203,166,247,0.1); }
+    .template-icon { font-size: 36px; margin-bottom: 10px; }
+    .template-name { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+    .template-desc { font-size: 12px; color: var(--subtext); }
+
+    /* Feature checkboxes */
+    .feature-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px; }
+    .feature-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; transition: all 0.2s; }
+    .feature-item:hover { border-color: var(--teal); }
+    .feature-item.checked { border-color: var(--teal); background: rgba(148,226,213,0.1); }
+    .feature-item input[type=checkbox] { accent-color: var(--teal); width: 16px; height: 16px; cursor: pointer; }
+    .feature-label { font-size: 13px; font-weight: 500; }
+
+    /* Summary */
+    .summary-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; }
+    .summary-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+    .summary-row:last-child { border-bottom: none; }
+    .summary-label { color: var(--subtext); font-size: 13px; width: 120px; flex-shrink: 0; }
+    .summary-value { font-weight: 600; color: var(--text); }
+    .feature-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+    .feature-tag { background: rgba(148,226,213,0.15); color: var(--teal); padding: 2px 8px; border-radius: 4px; font-size: 12px; }
+
+    /* Footer nav */
+    .footer { display: flex; justify-content: space-between; align-items: center; padding: 20px 40px; background: var(--surface2); border-top: 1px solid var(--border); }
+    .btn { padding: 11px 24px; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 6px; }
+    .btn-ghost { background: transparent; color: var(--subtext); }
+    .btn-ghost:hover { color: var(--text); }
+    .btn-next { background: linear-gradient(135deg, var(--blue), var(--mauve)); color: #1e1e2e; }
+    .btn-next:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(137,180,250,0.3); }
+    .btn-create { background: linear-gradient(135deg, var(--green), var(--teal)); color: #1e1e2e; }
+    .btn-create:hover { opacity: 0.9; transform: translateY(-1px); }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+    .creating-overlay { display: none; position: fixed; inset: 0; background: rgba(30,30,46,0.9); align-items: center; justify-content: center; flex-direction: column; gap: 16px; z-index: 100; }
+    .creating-overlay.visible { display: flex; }
+    .spinner { width: 48px; height: 48px; border: 4px solid var(--border); border-top-color: var(--blue); border-radius: 50%; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .creating-msg { color: var(--blue); font-size: 16px; font-weight: 600; }
+    .error-banner { background: rgba(243,139,168,0.15); border: 1px solid var(--red); border-radius: 8px; padding: 12px 16px; color: var(--red); font-size: 13px; margin-bottom: 16px; display: none; }
+    .error-banner.visible { display: block; }
+  </style>
+</head>
+<body>
+<div class="wizard">
+  <!-- Stepper -->
+  <div class="stepper" id="stepper">
+    <div class="step active" id="step1"><div class="step-num">1</div><div class="step-label">Project</div></div>
+    <div class="step-connector" id="conn1"></div>
+    <div class="step" id="step2"><div class="step-num">2</div><div class="step-label">Chip</div></div>
+    <div class="step-connector" id="conn2"></div>
+    <div class="step" id="step3"><div class="step-num">3</div><div class="step-label">Template</div></div>
+    <div class="step-connector" id="conn3"></div>
+    <div class="step" id="step4"><div class="step-num">4</div><div class="step-label">Features</div></div>
+    <div class="step-connector" id="conn4"></div>
+    <div class="step" id="step5"><div class="step-num">5</div><div class="step-label">Review</div></div>
+  </div>
+
+  <!-- Pages -->
+  <div class="pages">
+    <!-- Page 1: Project Info -->
+    <div class="page active" id="page1">
+      <h2>📁 Project Details</h2>
+      <p class="page-desc">Name your project and choose where to create it.</p>
+      <div class="error-banner" id="errorBanner"></div>
+      <div class="form-group">
+        <label>Project Name</label>
+        <input type="text" id="projectName" placeholder="my-esp32-project" oninput="validatePage1()">
+      </div>
+      <div class="form-group">
+        <label>Location</label>
+        <div class="location-row">
+          <input type="text" id="projectLocation" placeholder="/home/user/projects" oninput="validatePage1()">
+          <button class="btn-browse" onclick="pickLocation()">Browse...</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Page 2: Chip -->
+    <div class="page" id="page2">
+      <h2>⚙ Select Chip</h2>
+      <p class="page-desc">Choose the ESP32 variant for your project.</p>
+      <div class="chip-grid">
+        <div class="chip-card" onclick="selectChip('esp32', this)">
+          <div class="chip-name">ESP32</div>
+          <div class="chip-core">Xtensa LX6 Dual-Core</div>
+          <div class="chip-desc">240 MHz, WiFi + BT Classic + BLE, 520 KB SRAM</div>
+          <span class="chip-badge badge-xtensa">Xtensa</span>
+        </div>
+        <div class="chip-card" onclick="selectChip('esp32s2', this)">
+          <div class="chip-name">ESP32-S2</div>
+          <div class="chip-core">Xtensa LX7 Single-Core</div>
+          <div class="chip-desc">240 MHz, WiFi, USB-OTG, 320 KB SRAM</div>
+          <span class="chip-badge badge-xtensa">Xtensa</span>
+        </div>
+        <div class="chip-card selected" onclick="selectChip('esp32s3', this)">
+          <div class="chip-name">ESP32-S3 ⭐</div>
+          <div class="chip-core">Xtensa LX7 Dual-Core</div>
+          <div class="chip-desc">240 MHz, WiFi + BLE 5, USB-OTG, AI/ML, 512 KB SRAM</div>
+          <span class="chip-badge badge-xtensa">Xtensa</span>
+        </div>
+        <div class="chip-card" onclick="selectChip('esp32c3', this)">
+          <div class="chip-name">ESP32-C3</div>
+          <div class="chip-core">RISC-V Single-Core</div>
+          <div class="chip-desc">160 MHz, WiFi + BLE 5, USB-Serial, 400 KB SRAM</div>
+          <span class="chip-badge badge-riscv">RISC-V</span>
+        </div>
+        <div class="chip-card" onclick="selectChip('esp32c6', this)">
+          <div class="chip-name">ESP32-C6</div>
+          <div class="chip-core">RISC-V Single-Core</div>
+          <div class="chip-desc">160 MHz, WiFi 6, BLE 5.3, 802.15.4 Thread/Zigbee</div>
+          <span class="chip-badge badge-riscv">RISC-V</span>
+        </div>
+        <div class="chip-card" onclick="selectChip('esp32h2', this)">
+          <div class="chip-name">ESP32-H2</div>
+          <div class="chip-core">RISC-V Single-Core</div>
+          <div class="chip-desc">96 MHz, 802.15.4, BLE 5.3 only, ultra-low power</div>
+          <span class="chip-badge badge-riscv">RISC-V</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Page 3: Template -->
+    <div class="page" id="page3">
+      <h2>🧩 Project Template</h2>
+      <p class="page-desc">Pick the framework that matches your use case.</p>
+      <div class="template-grid">
+        <div class="template-card" onclick="selectTemplate('bare-metal', this)">
+          <div class="template-icon">⚙</div>
+          <div class="template-name">Bare Metal (no_std)</div>
+          <div class="template-desc">Direct hardware access with esp-hal. No OS. Maximum control.</div>
+        </div>
+        <div class="template-card selected" onclick="selectTemplate('esp-idf-std', this)">
+          <div class="template-icon">🌐</div>
+          <div class="template-name">ESP-IDF (std)</div>
+          <div class="template-desc">Full Rust std support via esp-idf-svc. Best for networking/WiFi.</div>
+        </div>
+        <div class="template-card" onclick="selectTemplate('embassy-async', this)">
+          <div class="template-icon">⚡</div>
+          <div class="template-name">Embassy Async</div>
+          <div class="template-desc">Modern async/await embedded runtime. no_std, high performance.</div>
+        </div>
+        <div class="template-card" onclick="selectTemplate('no-std-minimal', this)">
+          <div class="template-icon">🔬</div>
+          <div class="template-name">Minimal no_std</div>
+          <div class="template-desc">Absolute minimum boilerplate. For learning and experimentation.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Page 4: Features -->
+    <div class="page" id="page4">
+      <h2>✨ Project Features</h2>
+      <p class="page-desc">Select optional features to include. You can always add more later in Cargo.toml.</p>
+      <div class="feature-grid" id="featureGrid">
+        <!-- Populated by JS based on template -->
+      </div>
+    </div>
+
+    <!-- Page 5: Review -->
+    <div class="page" id="page5">
+      <h2>🚀 Ready to Create</h2>
+      <p class="page-desc">Review your project configuration before creating.</p>
+      <div class="summary-card" id="summaryCard"></div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <button class="btn btn-ghost" id="btnBack" onclick="goBack()" style="display:none">← Back</button>
+    <div></div>
+    <div style="display:flex;gap:12px">
+      <button class="btn btn-ghost" onclick="cancel()">Cancel</button>
+      <button class="btn btn-next" id="btnNext" onclick="goNext()" disabled>Next →</button>
+      <button class="btn btn-create" id="btnCreate" onclick="createProject()" style="display:none">🚀 Create Project</button>
+    </div>
+  </div>
+</div>
+
+<!-- Creating overlay -->
+<div class="creating-overlay" id="creatingOverlay">
+  <div class="spinner"></div>
+  <div class="creating-msg">Creating your project...</div>
+</div>
+
+<script>
+  const vscode = acquireVsCodeApi();
+  let currentPage = 1;
+  const totalPages = 5;
+  const state = {
+    name: '',
+    location: '',
+    chip: 'esp32s3',
+    template: 'esp-idf-std',
+    features: []
+  };
+
+  const ALL_FEATURES = [
+    { id: 'wifi', label: '📶 WiFi', templates: ['esp-idf-std'] },
+    { id: 'bluetooth', label: '🔵 BT LE', templates: ['esp-idf-std', 'bare-metal', 'embassy-async'] },
+    { id: 'ethernet', label: '🌐 Ethernet', templates: ['esp-idf-std'] },
+    { id: 'nvs', label: '💾 NVS Storage', templates: ['esp-idf-std'] },
+    { id: 'spiffs', label: '📁 SPIFFS', templates: ['esp-idf-std'] },
+    { id: 'mqtt', label: '📡 MQTT', templates: ['esp-idf-std'] },
+    { id: 'http-server', label: '🖥 HTTP Server', templates: ['esp-idf-std'] },
+    { id: 'ota', label: '🔄 OTA Updates', templates: ['esp-idf-std'] },
+    { id: 'usb-cdc', label: '🔌 USB CDC', templates: ['esp-idf-std', 'embassy-async'] },
+    { id: 'i2c', label: '🔗 I2C Drivers', templates: ['esp-idf-std', 'bare-metal', 'embassy-async'] },
+    { id: 'spi', label: '⚡ SPI Drivers', templates: ['esp-idf-std', 'bare-metal', 'embassy-async'] },
+    { id: 'defmt', label: '🪲 defmt Logging', templates: ['bare-metal', 'embassy-async', 'no-std-minimal'] }
+  ];
+
+  function updateStepper() {
+    for (let i = 1; i <= totalPages; i++) {
+      const step = document.getElementById('step' + i);
+      step.classList.remove('active', 'done');
+      if (i < currentPage) step.classList.add('done');
+      else if (i === currentPage) step.classList.add('active');
+      if (i < totalPages) {
+        const conn = document.getElementById('conn' + i);
+        conn.classList.toggle('done', i < currentPage);
+      }
+    }
+  }
+
+  function showPage(n) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active', 'exit-left'));
+    const prev = document.querySelector('.page.active');
+    if (prev) prev.classList.add('exit-left');
+    setTimeout(() => {
+      document.querySelectorAll('.page.exit-left').forEach(p => p.classList.remove('exit-left'));
+      document.getElementById('page' + n).classList.add('active');
+    }, 150);
+
+    document.getElementById('btnBack').style.display = n > 1 ? 'flex' : 'none';
+    document.getElementById('btnNext').style.display = n < totalPages ? 'flex' : 'none';
+    document.getElementById('btnCreate').style.display = n === totalPages ? 'flex' : 'none';
+
+    if (n === 4) renderFeatures();
+    if (n === 5) renderSummary();
+
+    validateCurrentPage();
+    updateStepper();
+  }
+
+  function goNext() {
+    if (currentPage < totalPages) {
+      currentPage++;
+      showPage(currentPage);
+    }
+  }
+
+  function goBack() {
+    if (currentPage > 1) {
+      currentPage--;
+      showPage(currentPage);
+    }
+  }
+
+  function cancel() { vscode.postMessage({ command: 'cancel' }); }
+
+  function pickLocation() { vscode.postMessage({ command: 'pick-location' }); }
+
+  function selectChip(chip, el) {
+    state.chip = chip;
+    document.querySelectorAll('.chip-card').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    validateCurrentPage();
+  }
+
+  function selectTemplate(tmpl, el) {
+    state.template = tmpl;
+    document.querySelectorAll('.template-card').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    state.features = []; // Reset features when template changes
+  }
+
+  function renderFeatures() {
+    const compatible = ALL_FEATURES.filter(f => f.templates.includes(state.template));
+    document.getElementById('featureGrid').innerHTML = compatible.map(f => `
+      <label class="feature-item ${state.features.includes(f.id) ? 'checked' : ''}" onclick="toggleFeature('${f.id}', this)">
+        <input type="checkbox" ${state.features.includes(f.id) ? 'checked' : ''} onclick="event.stopPropagation()">
+        <span class="feature-label">${f.label}</span>
+      </label>
+    `).join('');
+  }
+
+  function toggleFeature(id, el) {
+    el.classList.toggle('checked');
+    const cb = el.querySelector('input');
+    cb.checked = !cb.checked;
+    if (cb.checked) {
+      if (!state.features.includes(id)) state.features.push(id);
+    } else {
+      state.features = state.features.filter(f => f !== id);
+    }
+  }
+
+  function renderSummary() {
+    const featureTags = state.features.length > 0
+      ? state.features.map(f => `<span class="feature-tag">${f}</span>`).join('')
+      : '<span style="color:var(--subtext);font-size:13px">None selected</span>';
+
+    document.getElementById('summaryCard').innerHTML = `
+      <div class="summary-row"><div class="summary-label">Project Name</div><div class="summary-value">${state.name || '—'}</div></div>
+      <div class="summary-row"><div class="summary-label">Location</div><div class="summary-value" style="font-size:12px;font-family:monospace">${state.location || '—'}/${state.name || ''}</div></div>
+      <div class="summary-row"><div class="summary-label">Chip</div><div class="summary-value">${state.chip.toUpperCase()}</div></div>
+      <div class="summary-row"><div class="summary-label">Template</div><div class="summary-value">${state.template}</div></div>
+      <div class="summary-row"><div class="summary-label">Features</div><div class="summary-value"><div class="feature-tags">${featureTags}</div></div></div>
+    `;
+  }
+
+  function validatePage1() {
+    state.name = document.getElementById('projectName').value.trim();
+    state.location = document.getElementById('projectLocation').value.trim();
+    validateCurrentPage();
+  }
+
+  function validateCurrentPage() {
+    const nextBtn = document.getElementById('btnNext');
+    const createBtn = document.getElementById('btnCreate');
+    let valid = true;
+
+    if (currentPage === 1) valid = state.name.length > 0 && state.location.length > 0;
+
+    nextBtn.disabled = !valid;
+    createBtn.disabled = !valid;
+  }
+
+  function createProject() {
+    document.getElementById('creatingOverlay').classList.add('visible');
+    vscode.postMessage({
+      command: 'create-project',
+      data: {
+        name: state.name,
+        location: state.location,
+        chip: state.chip,
+        template: state.template,
+        features: state.features
+      }
+    });
+  }
+
+  window.addEventListener('message', event => {
+    const msg = event.data;
+    if (msg.command === 'location-selected') {
+      state.location = msg.path;
+      document.getElementById('projectLocation').value = msg.path;
+      validatePage1();
+    } else if (msg.command === 'error') {
+      document.getElementById('creatingOverlay').classList.remove('visible');
+      const banner = document.getElementById('errorBanner');
+      banner.textContent = '❌ ' + msg.message;
+      banner.classList.add('visible');
+    } else if (msg.command === 'success') {
+      // VS Code will open the folder
+    }
+  });
+
+  // Init
+  showPage(1);
+</script>
+</body>
+</html>

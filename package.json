@@ -1,0 +1,286 @@
+{
+  "name": "esp-forge",
+  "displayName": "ESP Forge",
+  "description": "The PlatformIO for Rust × ESP32. Build, flash, monitor, and debug ESP32 firmware written in Rust.",
+  "version": "0.1.0",
+  "publisher": "esp-forge",
+  "license": "MIT",
+  "icon": "media/icons/esp-forge.png",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other",
+    "Debuggers",
+    "Programming Languages"
+  ],
+  "keywords": [
+    "esp32",
+    "rust",
+    "embedded",
+    "esp-idf",
+    "embassy",
+    "rtos",
+    "xtensa",
+    "risc-v"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/esp-forge/esp-forge-vscode"
+  },
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "espforge.newProject",
+        "title": "ESPForge: New Project",
+        "icon": "$(add)"
+      },
+      {
+        "command": "espforge.build",
+        "title": "ESPForge: Build",
+        "icon": "$(play)"
+      },
+      {
+        "command": "espforge.flash",
+        "title": "ESPForge: Flash",
+        "icon": "$(zap)"
+      },
+      {
+        "command": "espforge.buildAndFlash",
+        "title": "ESPForge: Build & Flash",
+        "icon": "$(rocket)"
+      },
+      {
+        "command": "espforge.monitor",
+        "title": "ESPForge: Monitor",
+        "icon": "$(terminal)"
+      },
+      {
+        "command": "espforge.flashAndMonitor",
+        "title": "ESPForge: Flash & Monitor",
+        "icon": "$(debug-console)"
+      },
+      {
+        "command": "espforge.clean",
+        "title": "ESPForge: Clean"
+      },
+      {
+        "command": "espforge.check",
+        "title": "ESPForge: Check"
+      },
+      {
+        "command": "espforge.selectPort",
+        "title": "ESPForge: Select Port"
+      },
+      {
+        "command": "espforge.selectChip",
+        "title": "ESPForge: Select Chip"
+      },
+      {
+        "command": "espforge.toggleProfile",
+        "title": "ESPForge: Toggle Profile"
+      },
+      {
+        "command": "espforge.setup",
+        "title": "ESPForge: Setup / Install Tools"
+      },
+      {
+        "command": "espforge.manageToolchain",
+        "title": "ESPForge: Manage Toolchain"
+      },
+      {
+        "command": "espforge.startDebug",
+        "title": "ESPForge: Start Debug"
+      },
+      {
+        "command": "espforge.analyzeCoreDump",
+        "title": "ESPForge: Analyze Core Dump"
+      },
+      {
+        "command": "espforge.eraseFlash",
+        "title": "ESPForge: Erase Flash"
+      },
+      {
+        "command": "espforge.flashOTA",
+        "title": "ESPForge: Flash via OTA"
+      },
+      {
+        "command": "espforge.browseComponents",
+        "title": "ESPForge: Browse Components"
+      },
+      {
+        "command": "espforge.editPartitions",
+        "title": "ESPForge: Edit Partitions"
+      },
+      {
+        "command": "espforge.showDeviceInfo",
+        "title": "ESPForge: Show Device Info"
+      },
+      {
+        "command": "espforge.generateCI",
+        "title": "ESPForge: Generate CI Config"
+      },
+      {
+        "command": "espforge.profileMemory",
+        "title": "ESPForge: Profile Memory"
+      },
+      {
+        "command": "espforge.refreshSidebar",
+        "title": "ESPForge: Refresh",
+        "icon": "$(refresh)"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "espforge.newProject",
+        "key": "ctrl+shift+n",
+        "when": "espforge.projectActive"
+      },
+      {
+        "command": "espforge.build",
+        "key": "ctrl+shift+b",
+        "when": "espforge.projectActive"
+      },
+      {
+        "command": "espforge.flash",
+        "key": "ctrl+shift+u",
+        "when": "espforge.projectActive"
+      },
+      {
+        "command": "espforge.buildAndFlash",
+        "key": "ctrl+shift+f",
+        "when": "espforge.projectActive"
+      },
+      {
+        "command": "espforge.monitor",
+        "key": "ctrl+shift+m",
+        "when": "espforge.projectActive"
+      },
+      {
+        "command": "espforge.flashAndMonitor",
+        "key": "ctrl+shift+d",
+        "when": "espforge.projectActive"
+      },
+      {
+        "command": "espforge.startDebug",
+        "key": "F5",
+        "when": "espforge.projectActive"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "esp-forge",
+          "title": "ESP Forge",
+          "icon": "media/icons/esp-forge.svg"
+        }
+      ]
+    },
+    "views": {
+      "esp-forge": [
+        {
+          "id": "espforge.sidebar",
+          "name": "ESP Forge",
+          "type": "tree"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "espforge.refreshSidebar",
+          "when": "view == espforge.sidebar",
+          "group": "navigation"
+        },
+        {
+          "command": "espforge.newProject",
+          "when": "view == espforge.sidebar",
+          "group": "navigation"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "ESP Forge",
+      "properties": {
+        "espforge.autoDetectPort": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically detect connected ESP32 device port"
+        },
+        "espforge.serialMonitorMode": {
+          "type": "string",
+          "enum": ["simple", "rich"],
+          "default": "rich",
+          "description": "Serial monitor display mode"
+        },
+        "espforge.autoOpenMonitorAfterFlash": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically open serial monitor after flashing"
+        },
+        "espforge.checkOnSave": {
+          "type": "boolean",
+          "default": true,
+          "description": "Run cargo check on file save"
+        },
+        "espforge.checkDebounceMs": {
+          "type": "number",
+          "default": 500,
+          "description": "Debounce delay in ms for check on save"
+        }
+      }
+    },
+    "problemMatchers": [
+      {
+        "name": "espflash",
+        "owner": "espforge",
+        "fileLocation": "absolute",
+        "pattern": {
+          "regexp": "^error\\[(.*)\\]:\\s+(.*)$",
+          "code": 1,
+          "message": 2
+        }
+      }
+    ],
+    "snippets": [
+      {
+        "language": "rust",
+        "path": "./snippets/rust.json"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "node esbuild.js --production",
+    "compile": "node esbuild.js",
+    "watch": "node esbuild.js --watch",
+    "pretest": "npm run compile",
+    "lint": "eslint src --ext ts"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.85.0",
+    "@types/semver": "^7.5.6",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "esbuild": "^0.19.0",
+    "eslint": "^8.0.0",
+    "typescript": "^5.3.0"
+  },
+  "dependencies": {
+    "@vscode/webview-ui-toolkit": "^1.4.0",
+    "chokidar": "^3.6.0",
+    "execa": "^8.0.1",
+    "node-fetch": "^3.3.2",
+    "semver": "^7.5.4",
+    "toml": "^3.0.0"
+  },
+  "optionalDependencies": {
+    "@serialport/parser-readline": "^12.0.0",
+    "serialport": "^12.0.0",
+    "usb-detection": "^4.14.1"
+  }
+}

@@ -1,0 +1,31 @@
+[package]
+name = "{{project_name}}"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "{{project_name}}"
+test = false
+bench = false
+
+[dependencies]
+# Core ESP-IDF service layer with std support
+esp-idf-svc = { version = "0.48", features = ["std", "alloc"] }
+
+# Logging via ESP-IDF log subsystem
+log = "0.4"
+
+# WiFi (optional - uncomment if needed)
+# esp-idf-svc = { version = "0.48", features = ["wifi"] }
+
+# HTTP client/server (optional)
+# embedded-svc = { version = "0.26", features = ["std"] }
+
+[build-dependencies]
+# Manages ESP-IDF download, patching, and CMake build
+embuild = "0.31"
+
+[profile.release]
+opt-level = "s"
+lto = true
+strip = true

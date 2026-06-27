@@ -1,0 +1,29 @@
+[package]
+name = "{{project_name}}"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+embassy-executor = { version = "0.5", features = [
+    "task-arena-size-32768",
+    "arch-xtensa",
+    "executor-thread",
+    "integrated-timers",
+    "executor-interrupt",
+] }
+embassy-time = { version = "0.3", features = ["generic-queue-8"] }
+embassy-sync = { version = "0.5" }
+embassy-futures = { version = "0.1" }
+esp-hal = { version = "0.18", features = ["esp32s3", "embassy"] }
+esp-hal-embassy = { version = "0.2", features = ["esp32s3"] }
+esp-backtrace = { version = "0.13", features = ["esp32s3", "exception-handler", "panic-handler", "println"] }
+esp-println = { version = "0.10", features = ["esp32s3", "log"] }
+log = "0.4"
+
+# Uncomment to add WiFi support (requires esp-idf-sys for some features):
+# esp-wifi = { version = "0.7", features = ["esp32s3", "wifi"] }
+
+[[bin]]
+name = "{{project_name}}"
+test = false
+bench = false

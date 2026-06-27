@@ -1,0 +1,110 @@
+{
+  "ESP GPIO Output": {
+    "prefix": "esp-gpio-output",
+    "body": [
+      "use esp_hal::gpio::{Io, Level, Output};",
+      "",
+      "let io = Io::new(peripherals.GPIO, peripherals.IO_MUX);",
+      "let mut ${1:led} = Output::new(io.pins.gpio${2:2}, Level::Low);",
+      "",
+      "// Toggle the pin",
+      "${1:led}.toggle();"
+    ],
+    "description": "ESP32 GPIO output configuration"
+  },
+  "ESP WiFi Connect (ESP-IDF)": {
+    "prefix": "esp-wifi-connect",
+    "body": [
+      "use esp_idf_svc::{",
+      "    eventloop::EspSystemEventLoop,",
+      "    nvs::EspDefaultNvsPartition,",
+      "    wifi::{BlockingWifi, ClientConfiguration, Configuration, EspWifi},",
+      "};",
+      "",
+      "let sysloop = EspSystemEventLoop::take()?;",
+      "let nvs = EspDefaultNvsPartition::take()?;",
+      "let modem = peripherals.modem;",
+      "",
+      "let mut wifi = BlockingWifi::wrap(",
+      "    EspWifi::new(modem, sysloop.clone(), Some(nvs))?,",
+      "    sysloop,",
+      ")?;",
+      "",
+      "wifi.set_configuration(&Configuration::Client(ClientConfiguration {",
+      "    ssid: \"${1:SSID}\".try_into().unwrap(),",
+      "    password: \"${2:PASSWORD}\".try_into().unwrap(),",
+      "    ..Default::default()",
+      "}))?;",
+      "",
+      "wifi.start()?;",
+      "wifi.connect()?;",
+      "wifi.wait_netif_up()?;",
+      "",
+      "log::info!(\"WiFi connected! IP: {:?}\", wifi.wifi().sta_netif().get_ip_info()?);"
+    ],
+    "description": "ESP32 WiFi connection using esp-idf-svc"
+  },
+  "Embassy Async Task": {
+    "prefix": "esp-task",
+    "body": [
+      "#[embassy_executor::task]",
+      "async fn ${1:my_task}(${2:}) {",
+      "    loop {",
+      "        $0",
+      "        embassy_time::Timer::after(embassy_time::Duration::from_millis(${3:1000})).await;",
+      "    }",
+      "}"
+    ],
+    "description": "Embassy async task definition"
+  },
+  "ESP NVS Read": {
+    "prefix": "esp-nvs-read",
+    "body": [
+      "use esp_idf_svc::nvs::{EspDefaultNvsPartition, EspNvs, NvsDefault};",
+      "",
+      "let nvs_partition = EspDefaultNvsPartition::take()?;",
+      "let nvs = EspNvs::new(nvs_partition, \"${1:storage}\", true)?;",
+      "",
+      "let mut buf = [0u8; 64];",
+      "if let Some(len) = nvs.get_str(\"${2:key}\", &mut buf)? {",
+      "    let value = std::str::from_utf8(&buf[..len]).unwrap_or(\"\");",
+      "    log::info!(\"Read from NVS: {}\", value);",
+      "}"
+    ],
+    "description": "Read a string value from ESP32 NVS storage"
+  },
+  "ESP I2C Read": {
+    "prefix": "esp-i2c-read",
+    "body": [
+      "use esp_hal::i2c::I2c;",
+      "",
+      "let i2c = I2c::new(",
+      "    peripherals.I2C0,",
+      "    io.pins.gpio${1:21}, // SDA",
+      "    io.pins.gpio${2:22}, // SCL",
+      "    100.kHz(),",
+      "    &clocks,",
+      ");",
+      "",
+      "let mut data = [0u8; ${3:1}];",
+      "i2c.write_read(0x${4:48}, &[0x${5:00}], &mut data).unwrap();",
+      "esp_println::println!(\"I2C read: {:?}\", data);"
+    ],
+    "description": "ESP32 I2C read using esp-hal"
+  },
+  "ESP Timer": {
+    "prefix": "esp-timer",
+    "body": [
+      "use esp_idf_svc::timer::{EspTaskTimerService, EspTimer};",
+      "",
+      "let timer_service = EspTaskTimerService::new()?;",
+      "let mut timer = timer_service.timer(move || {",
+      "    log::info!(\"Timer fired!\");",
+      "    $0",
+      "})?;",
+      "",
+      "timer.every(std::time::Duration::from_millis(${1:1000}))?;"
+    ],
+    "description": "ESP32 periodic timer using esp-idf-svc"
+  }
+}

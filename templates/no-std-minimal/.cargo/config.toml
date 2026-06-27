@@ -1,0 +1,10 @@
+[build]
+target = "xtensa-esp32s3-espidf"
+
+[target.xtensa-esp32s3-espidf]
+rustflags = ["-C", "link-arg=-Tlinkall.x"]
+linker = "xtensa-esp-elf-gcc"
+
+[target.riscv32imc-esp-espidf]
+rustflags = ["-C", "link-arg=-Tlinkall.x"]
+linker = "riscv32-esp-elf-gcc"

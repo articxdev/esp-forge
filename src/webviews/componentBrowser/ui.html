@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline';">
+  <title>Component Browser</title>
+  <style>
+    :root {
+      --bg: #1e1e2e; --surface: #313244; --surface2: #181825; --border: #45475a;
+      --text: #cdd6f4; --subtext: #a6adc8; --blue: #89b4fa; --green: #a6e3a1;
+      --red: #f38ba8; --yellow: #f9e2af; --purple: #cba6f7; --teal: #94e2d5;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; padding: 24px; }
+    h1 { color: var(--blue); margin-bottom: 20px; font-size: 22px; }
+    .tabs { display: flex; gap: 4px; margin-bottom: 20px; border-bottom: 1px solid var(--border); }
+    .tab { padding: 10px 20px; cursor: pointer; border-bottom: 2px solid transparent; font-size: 14px; font-weight: 600; color: var(--subtext); transition: all 0.2s; }
+    .tab.active { color: var(--blue); border-bottom-color: var(--blue); }
+    .tab:hover:not(.active) { color: var(--text); }
+    .search-row { display: flex; gap: 8px; margin-bottom: 20px; }
+    .search-input { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; color: var(--text); font-size: 14px; outline: none; }
+    .search-input:focus { border-color: var(--blue); }
+    .btn { padding: 10px 18px; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; transition: all 0.2s; }
+    .btn-search { background: var(--blue); color: #1e1e2e; }
+    .btn-search:hover { opacity: 0.9; }
+    .results { display: flex; flex-direction: column; gap: 10px; }
+    .result-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; display: flex; gap: 14px; align-items: flex-start; transition: border-color 0.2s; }
+    .result-card:hover { border-color: var(--blue); }
+    .result-info { flex: 1; }
+    .result-name { font-size: 15px; font-weight: 700; color: var(--blue); }
+    .result-version { display: inline-block; padding: 2px 6px; background: rgba(137,180,250,0.15); border-radius: 4px; font-size: 12px; color: var(--blue); margin-left: 8px; }
+    .result-desc { color: var(--subtext); font-size: 13px; margin-top: 4px; }
+    .result-meta { display: flex; gap: 12px; margin-top: 6px; font-size: 12px; color: var(--border); }
+    .btn-add { padding: 6px 14px; background: linear-gradient(135deg, var(--green), var(--teal)); color: #1e1e2e; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 700; white-space: nowrap; transition: all 0.2s; }
+    .btn-add:hover { opacity: 0.9; transform: translateY(-1px); }
+    .loading { text-align: center; padding: 40px; color: var(--subtext); }
+    .spin { animation: spin 0.8s linear infinite; display: inline-block; font-size: 24px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .empty { text-align: center; padding: 60px; color: var(--subtext); }
+    .empty .icon { font-size: 48px; margin-bottom: 12px; }
+    .panel { display: none; }
+    .panel.active { display: block; }
+  </style>
+</head>
+<body>
+  <h1>🧩 Component Browser</h1>
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('idf', this)">Espressif Component Registry</div>
+    <div class="tab" onclick="switchTab('crates', this)">crates.io (ESP Crates)</div>
+  </div>
+
+  <div class="panel active" id="panel-idf">
+    <div class="search-row">
+      <input class="search-input" id="idf-search" placeholder="Search IDF components..." onkeydown="if(event.key==='Enter')searchIdf()">
+      <button class="btn btn-search" onclick="searchIdf()">🔍 Search</button>
+    </div>
+    <div class="results" id="idf-results">
+      <div class="empty"><div class="icon">📦</div><p>Search for ESP-IDF components</p></div>
+    </div>
+  </div>
+
+  <div class="panel" id="panel-crates">
+    <div class="search-row">
+      <input class="search-input" id="crates-search" placeholder="Search Rust crates for ESP32..." onkeydown="if(event.key==='Enter')searchCrates()">
+      <button class="btn btn-search" onclick="searchCrates()">🔍 Search</button>
+    </div>
+    <div class="results" id="crates-results">
+      <div class="empty"><div class="icon">🦀</div><p>Search for ESP-compatible Rust crates</p></div>
+    </div>
+  </div>
+
+  <script>
+    const vscode = acquireVsCodeApi();
+
+    function switchTab(tab, el) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+      el.classList.add('active');
+      document.getElementById('panel-' + tab).classList.add('active');
+    }
+
+    function searchIdf() {
+      const q = document.getElementById('idf-search').value.trim();
+      if (!q) return;
+      document.getElementById('idf-results').innerHTML = '<div class="loading"><span class="spin">⟳</span></div>';
+      vscode.postMessage({ command: 'search-idf', query: q });
+    }
+
+    function searchCrates() {
+      const q = document.getElementById('crates-search').value.trim();
+      document.getElementById('crates-results').innerHTML = '<div class="loading"><span class="spin">⟳</span></div>';
+      vscode.postMessage({ command: 'search-crates', query: q || 'esp32' });
+    }
+
+    function renderIdfResults(results) {
+      if (!results.length) {
+        document.getElementById('idf-results').innerHTML = '<div class="empty"><div class="icon">😕</div><p>No components found</p></div>';
+        return;
+      }
+      document.getElementById('idf-results').innerHTML = results.map(r => `
+        <div class="result-card">
+          <div class="result-info">
+            <div><span class="result-name">${r.name}</span><span class="result-version">${r.version || 'latest'}</span></div>
+            <div class="result-desc">${r.description || 'No description'}</div>
+          </div>
+          <button class="btn-add" onclick="addToIdf('${r.name}', '${r.version || '*'}')">+ idf_component.yml</button>
+        </div>
+      `).join('');
+    }
+
+    function renderCratesResults(results) {
+      if (!results.length) {
+        document.getElementById('crates-results').innerHTML = '<div class="empty"><div class="icon">😕</div><p>No crates found</p></div>';
+        return;
+      }
+      document.getElementById('crates-results').innerHTML = results.map(r => `
+        <div class="result-card">
+          <div class="result-info">
+            <div><span class="result-name">${r.name}</span><span class="result-version">${r.newest_version}</span></div>
+            <div class="result-desc">${r.description || 'No description'}</div>
+            <div class="result-meta"><span>⬇ ${(r.downloads||0).toLocaleString()} downloads</span></div>
+          </div>
+          <button class="btn-add" onclick="addToCargo('${r.name}', '${r.newest_version}')">+ Cargo.toml</button>
+        </div>
+      `).join('');
+    }
+
+    function addToIdf(name, version) { vscode.postMessage({ command: 'add-to-idf', name, version }); }
+    function addToCargo(name, version) { vscode.postMessage({ command: 'add-to-cargo', name, version }); }
+
+    window.addEventListener('message', event => {
+      const msg = event.data;
+      switch (msg.command) {
+        case 'idf-results': renderIdfResults(msg.results); break;
+        case 'crates-results': renderCratesResults(msg.results); break;
+        case 'idf-error': document.getElementById('idf-results').innerHTML = '<div class="empty"><p style="color:#f38ba8">Error: ' + msg.message + '</p></div>'; break;
+        case 'crates-error': document.getElementById('crates-results').innerHTML = '<div class="empty"><p style="color:#f38ba8">Error: ' + msg.message + '</p></div>'; break;
+        case 'added': vscode.postMessage({ command: 'show-info', message: msg.name + ' added!' }); break;
+      }
+    });
+
+    // Auto-search popular ESP crates on open
+    searchCrates();
+  </script>
+</body>
+</html>

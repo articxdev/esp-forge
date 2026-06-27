@@ -1,0 +1,26 @@
+[build]
+# Default target: ESP32-S3 Xtensa
+# Change to riscv32imc-esp-espidf for C3/C6/H2
+target = "xtensa-esp32s3-espidf"
+
+[target.xtensa-esp32s3-espidf]
+rustflags = [
+    "-C", "link-arg=-Tlinkall.x",
+]
+linker = "xtensa-esp-elf-gcc"
+
+[target.riscv32imc-esp-espidf]
+rustflags = [
+    "-C", "link-arg=-Tlinkall.x",
+]
+linker = "riscv32-esp-elf-gcc"
+
+[target.riscv32imac-esp-espidf]
+rustflags = [
+    "-C", "link-arg=-Tlinkall.x",
+]
+linker = "riscv32-esp-elf-gcc"
+
+[env]
+# Instruct esp-hal which chip to target
+ESP_LOGLEVEL = "INFO"

@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline';">
+  <title>Serial Monitor</title>
+  <style>
+    :root {
+      --bg: #1e1e2e; --surface: #313244; --surface2: #181825; --border: #45475a;
+      --text: #cdd6f4; --subtext: #a6adc8; --blue: #89b4fa; --green: #a6e3a1;
+      --red: #f38ba8; --yellow: #f9e2af; --purple: #cba6f7; --teal: #94e2d5;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; overflow: hidden; }
+    body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; display: flex; flex-direction: column; }
+
+    /* Toolbar */
+    .toolbar {
+      display: flex; align-items: center; gap: 8px; padding: 8px 12px;
+      background: var(--surface2); border-bottom: 1px solid var(--border); flex-shrink: 0; flex-wrap: wrap;
+    }
+    .toolbar-group { display: flex; align-items: center; gap: 6px; }
+    .toolbar-sep { width: 1px; height: 24px; background: var(--border); margin: 0 4px; }
+    select { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; color: var(--text); padding: 5px 8px; font-size: 13px; outline: none; cursor: pointer; }
+    select:focus { border-color: var(--blue); }
+    .btn-tool {
+      padding: 5px 12px; border: 1px solid var(--border); border-radius: 6px;
+      background: var(--surface); color: var(--text); cursor: pointer; font-size: 13px;
+      display: flex; align-items: center; gap: 4px; transition: all 0.15s; white-space: nowrap;
+    }
+    .btn-tool:hover { background: var(--border); }
+    .btn-tool.active { background: rgba(137,180,250,0.2); border-color: var(--blue); color: var(--blue); }
+    .btn-connect { background: linear-gradient(135deg, var(--green), #39d353); color: #1e1e2e; border-color: transparent; font-weight: 700; }
+    .btn-disconnect { background: linear-gradient(135deg, var(--red), #e03b5e); color: #1e1e2e; border-color: transparent; font-weight: 700; }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .status-dot.connected { background: var(--green); box-shadow: 0 0 6px var(--green); animation: pulse 2s infinite; }
+    .status-dot.disconnected { background: var(--subtext); }
+    .status-dot.reconnecting { background: var(--yellow); animation: pulse 0.5s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.4} }
+    .search-input {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 6px;
+      color: var(--text); padding: 5px 10px; font-size: 13px; outline: none; width: 180px;
+    }
+    .search-input:focus { border-color: var(--blue); }
+    .badge-count { background: var(--surface2); border-radius: 10px; padding: 2px 8px; font-size: 11px; color: var(--subtext); }
+
+    /* Output area */
+    .output {
+      flex: 1; overflow-y: auto; padding: 8px 12px; font-family: 'Cascadia Code', 'Fira Code', 'Courier New', monospace;
+      font-size: 13px; line-height: 1.7; background: var(--surface2);
+    }
+    .output-line { display: flex; align-items: baseline; gap: 10px; }
+    .output-line.hidden { display: none; }
+    .ts { color: var(--border); font-size: 11px; min-width: 90px; flex-shrink: 0; }
+    .text { color: var(--text); word-break: break-all; flex: 1; }
+    .text .match { background: rgba(249,226,175,0.3); border-radius: 2px; }
+    .defmt-location { cursor: pointer; color: var(--blue); text-decoration: underline; font-size: 11px; }
+
+    /* Input bar */
+    .input-bar {
+      display: flex; gap: 8px; padding: 8px 12px;
+      background: var(--surface2); border-top: 1px solid var(--border); flex-shrink: 0;
+    }
+    .send-input {
+      flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 6px;
+      color: var(--text); padding: 7px 12px; font-size: 14px; outline: none; font-family: monospace;
+    }
+    .send-input:focus { border-color: var(--blue); }
+    .btn-send { padding: 7px 18px; background: var(--blue); color: #1e1e2e; border: none; border-radius: 6px; font-weight: 700; cursor: pointer; font-size: 14px; transition: all 0.15s; }
+    .btn-send:hover { opacity: 0.9; }
+
+    .empty-state { text-align: center; padding: 60px 20px; color: var(--subtext); }
+    .empty-state .icon { font-size: 48px; margin-bottom: 16px; }
+    .empty-state h3 { font-size: 18px; margin-bottom: 8px; color: var(--text); }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  </style>
+</head>
+<body>
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <div class="toolbar-group">
+      <div class="status-dot disconnected" id="statusDot"></div>
+      <select id="portSelect" title="Serial Port"><option value="">— Select Port —</option></select>
+      <select id="baudSelect" title="Baud Rate" onchange="onBaudChange(this.value)">
+        <option value="9600">9600</option>
+        <option value="19200">19200</option>
+        <option value="38400">38400</option>
+        <option value="57600">57600</option>
+        <option value="74880">74880</option>
+        <option value="115200" selected>115200</option>
+        <option value="230400">230400</option>
+        <option value="460800">460800</option>
+        <option value="921600">921600</option>
+        <option value="1000000">1 Mbaud</option>
+        <option value="2000000">2 Mbaud</option>
+      </select>
+      <button class="btn-tool btn-connect" id="btnConnect" onclick="toggleConnect()">▶ Connect</button>
+    </div>
+    <div class="toolbar-sep"></div>
+    <div class="toolbar-group">
+      <input class="search-input" id="searchInput" placeholder="🔍 Filter..." oninput="filterLines(this.value)">
+      <button class="btn-tool" id="btnTimestamp" onclick="toggleTimestamps()" title="Toggle Timestamps">🕐 Time</button>
+      <button class="btn-tool" id="btnScroll" onclick="toggleAutoScroll()" title="Auto-scroll" class="active">⬇ Auto</button>
+    </div>
+    <div class="toolbar-sep"></div>
+    <div class="toolbar-group">
+      <span class="badge-count" id="lineCount">0 lines</span>
+      <button class="btn-tool" onclick="clearOutput()">🗑 Clear</button>
+      <button class="btn-tool" onclick="saveLog()">💾 Save</button>
+    </div>
+  </div>
+
+  <!-- Output -->
+  <div class="output" id="output">
+    <div class="empty-state" id="emptyState">
+      <div class="icon">📡</div>
+      <h3>Serial Monitor</h3>
+      <p>Select a port and click Connect to begin monitoring serial output from your ESP32.</p>
+    </div>
+  </div>
+
+  <!-- Input bar -->
+  <div class="input-bar">
+    <input class="send-input" id="sendInput" placeholder="Send data to device... (Enter to send)" onkeydown="onKeyDown(event)">
+    <button class="btn-send" onclick="sendData()">Send ↵</button>
+  </div>
+
+  <script>
+    const vscode = acquireVsCodeApi();
+    let autoScroll = true;
+    let showTimestamps = true;
+    let isConnected = false;
+    let lineCount = 0;
+    let allLines = [];
+    let currentFilter = '';
+    let logText = '';
+
+    function toggleConnect() {
+      if (isConnected) {
+        vscode.postMessage({ command: 'disconnect' });
+      } else {
+        const port = document.getElementById('portSelect').value;
+        const baud = parseInt(document.getElementById('baudSelect').value);
+        if (!port) { alert('Please select a serial port first.'); return; }
+        vscode.postMessage({ command: 'connect', port, baud });
+      }
+    }
+
+    function onBaudChange(baud) {
+      if (isConnected) {
+        vscode.postMessage({ command: 'change-baud', baud: parseInt(baud) });
+      }
+    }
+
+    function sendData() {
+      const input = document.getElementById('sendInput');
+      const data = input.value;
+      if (!data || !isConnected) return;
+      vscode.postMessage({ command: 'send', data });
+      input.value = '';
+    }
+
+    function onKeyDown(e) {
+      if (e.key === 'Enter') sendData();
+    }
+
+    function appendLine(line, timestamp) {
+      const output = document.getElementById('output');
+      const emptyState = document.getElementById('emptyState');
+      if (emptyState) emptyState.remove();
+
+      lineCount++;
+      const ts = timestamp ?? '';
+      logText += (ts ? `[${ts}] ` : '') + line + '\n';
+
+      const div = document.createElement('div');
+      div.className = 'output-line';
+      div.dataset.text = line.toLowerCase();
+
+      const tsEl = document.createElement('span');
+      tsEl.className = 'ts';
+      tsEl.textContent = ts;
+      tsEl.style.display = showTimestamps ? '' : 'none';
+
+      const textEl = document.createElement('span');
+      textEl.className = 'text';
+      textEl.textContent = line;
+
+      // Apply filter highlighting
+      if (currentFilter && line.toLowerCase().includes(currentFilter)) {
+        const re = new RegExp('(' + escapeRe(currentFilter) + ')', 'gi');
+        textEl.innerHTML = line.replace(re, '<span class="match">$1</span>');
+      }
+
+      if (currentFilter && !line.toLowerCase().includes(currentFilter)) {
+        div.classList.add('hidden');
+      }
+
+      div.appendChild(tsEl);
+      div.appendChild(textEl);
+      output.appendChild(div);
+      allLines.push(div);
+
+      document.getElementById('lineCount').textContent = lineCount + ' lines';
+
+      if (autoScroll) {
+        output.scrollTop = output.scrollHeight;
+      }
+    }
+
+    function appendHtml(html) {
+      const output = document.getElementById('output');
+      const el = document.createElement('div');
+      el.innerHTML = html;
+      output.appendChild(el);
+      if (autoScroll) output.scrollTop = output.scrollHeight;
+    }
+
+    function batchLines(batch) {
+      const items = batch.trim().split('\n');
+      for (const item of items) {
+        if (!item) continue;
+        try {
+          const { line, timestamp } = JSON.parse(item);
+          appendLine(line, timestamp);
+        } catch { /* ignore */ }
+      }
+    }
+
+    function filterLines(filter) {
+      currentFilter = filter.toLowerCase();
+      for (const div of allLines) {
+        const text = div.dataset.text ?? '';
+        const textEl = div.querySelector('.text');
+        if (currentFilter && !text.includes(currentFilter)) {
+          div.classList.add('hidden');
+        } else {
+          div.classList.remove('hidden');
+          if (textEl) {
+            if (currentFilter) {
+              const re = new RegExp('(' + escapeRe(currentFilter) + ')', 'gi');
+              textEl.innerHTML = textEl.textContent.replace(re, '<span class="match">$1</span>');
+            } else {
+              textEl.textContent = textEl.textContent;
+            }
+          }
+        }
+      }
+    }
+
+    function toggleTimestamps() {
+      showTimestamps = !showTimestamps;
+      document.getElementById('btnTimestamp').classList.toggle('active', showTimestamps);
+      for (const div of allLines) {
+        const ts = div.querySelector('.ts');
+        if (ts) ts.style.display = showTimestamps ? '' : 'none';
+      }
+    }
+
+    function toggleAutoScroll() {
+      autoScroll = !autoScroll;
+      document.getElementById('btnScroll').classList.toggle('active', autoScroll);
+    }
+
+    function clearOutput() {
+      const output = document.getElementById('output');
+      output.innerHTML = '';
+      allLines = [];
+      lineCount = 0;
+      logText = '';
+      document.getElementById('lineCount').textContent = '0 lines';
+    }
+
+    function saveLog() {
+      vscode.postMessage({ command: 'save-log', data: logText });
+    }
+
+    function openFile(file, line) {
+      vscode.postMessage({ command: 'open-file', file, line });
+    }
+
+    function escapeRe(s) {
+      return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
+    function setConnected(port, baud) {
+      isConnected = true;
+      const dot = document.getElementById('statusDot');
+      dot.className = 'status-dot connected';
+      const btn = document.getElementById('btnConnect');
+      btn.className = 'btn-tool btn-disconnect';
+      btn.textContent = '■ Disconnect';
+      appendLine(`── Connected: ${port} @ ${baud} baud ──`, new Date().toISOString().slice(11,23));
+    }
+
+    function setDisconnected() {
+      isConnected = false;
+      const dot = document.getElementById('statusDot');
+      dot.className = 'status-dot disconnected';
+      const btn = document.getElementById('btnConnect');
+      btn.className = 'btn-tool btn-connect';
+      btn.textContent = '▶ Connect';
+    }
+
+    // Scan ports on open
+    vscode.postMessage({ command: 'scan-ports' });
+
+    window.addEventListener('message', event => {
+      const msg = event.data;
+      switch (msg.command) {
+        case 'connected':
+          setConnected(msg.port, msg.baud);
+          break;
+        case 'disconnected':
+          setDisconnected();
+          appendLine('── Disconnected ──', new Date().toISOString().slice(11,23));
+          break;
+        case 'reconnecting':
+          document.getElementById('statusDot').className = 'status-dot reconnecting';
+          appendLine('── Reconnecting... ──', new Date().toISOString().slice(11,23));
+          break;
+        case 'batch-lines':
+          batchLines(msg.batch);
+          break;
+        case 'append-html':
+          appendHtml(msg.html);
+          break;
+        case 'error':
+          appendLine('ERROR: ' + msg.message, new Date().toISOString().slice(11,23));
+          break;
+        case 'baud-changed':
+          appendLine(`── Baud rate changed to ${msg.baud} ──`, new Date().toISOString().slice(11,23));
+          break;
+        case 'ports-scanned': {
+          const sel = document.getElementById('portSelect');
+          const prev = sel.value;
+          sel.innerHTML = '<option value="">— Select Port —</option>';
+          for (const p of msg.ports) {
+            const opt = document.createElement('option');
+            opt.value = p.path;
+            opt.textContent = p.path + (p.manufacturer ? ` (${p.manufacturer})` : '');
+            if (p.path === prev) opt.selected = true;
+            sel.appendChild(opt);
+          }
+          break;
+        }
+      }
+    });
+  </script>
+</body>
+</html>

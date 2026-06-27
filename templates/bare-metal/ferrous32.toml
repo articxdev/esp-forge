@@ -1,0 +1,28 @@
+[project]
+name = "{{project_name}}"
+chip = "esp32s3"
+
+[build]
+profile = "debug"
+features = []
+toolchain = "esp"
+
+[flash]
+port = "auto"
+speed = 921600
+before = "default_reset"
+after = "hard_reset"
+format = "esp-bootloader"
+
+[monitor]
+baud = 115200
+filters = []
+timestamps = true
+
+[idf]
+version = "v5.2"
+sdkconfig = "sdkconfig.defaults"
+
+[debug]
+probe = "auto"
+openocd_args = []

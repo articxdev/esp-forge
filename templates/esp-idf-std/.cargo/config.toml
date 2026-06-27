@@ -1,0 +1,22 @@
+[build]
+target = "xtensa-esp32s3-espidf"
+
+[target.xtensa-esp32s3-espidf]
+linker = "ldproxy"
+# Required for esp-idf-sys to work
+rustflags = ["--cfg", "espidf_time64"]
+
+[target.riscv32imc-esp-espidf]
+linker = "ldproxy"
+rustflags = ["--cfg", "espidf_time64"]
+
+[target.riscv32imac-esp-espidf]
+linker = "ldproxy"
+rustflags = ["--cfg", "espidf_time64"]
+
+[env]
+# Tell esp-idf-sys which IDF version to download
+ESP_IDF_VERSION = "v5.2"
+# Let the build crate manage IDF (recommended)
+ESP_IDF_TOOLS_INSTALL_DIR = "global"
+# IMPORTANT: do NOT set IDF_PATH here unless you have a manual install

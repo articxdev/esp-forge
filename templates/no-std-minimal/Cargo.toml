@@ -1,0 +1,15 @@
+[package]
+name = "{{project_name}}"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# Minimal panic handler (prints to UART and halts)
+esp-backtrace = { version = "0.13", features = ["esp32s3", "exception-handler", "panic-handler", "println"] }
+# UART printing without std
+esp-println = { version = "0.10", features = ["esp32s3"] }
+
+[[bin]]
+name = "{{project_name}}"
+test = false
+bench = false
