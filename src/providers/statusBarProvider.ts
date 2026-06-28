@@ -7,6 +7,7 @@ export class StatusBarProvider {
   private readonly portItem: vscode.StatusBarItem;
   private readonly profileItem: vscode.StatusBarItem;
   private readonly statusItem: vscode.StatusBarItem;
+  private readonly buildFlashItem: vscode.StatusBarItem;
   private readonly flashItem: vscode.StatusBarItem;
   private readonly monitorItem: vscode.StatusBarItem;
   private buildStartTime: number | undefined;
@@ -22,10 +23,11 @@ export class StatusBarProvider {
     this.portItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, priority + 2);
     this.profileItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, priority + 1);
     this.statusItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, priority);
-    this.flashItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, priority - 1);
-    this.monitorItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, priority - 2);
+    this.buildFlashItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, priority - 1);
+    this.flashItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, priority - 2);
+    this.monitorItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, priority - 3);
 
-    context.subscriptions.push(this.chipItem, this.portItem, this.profileItem, this.statusItem, this.flashItem, this.monitorItem);
+    context.subscriptions.push(this.chipItem, this.portItem, this.profileItem, this.statusItem, this.buildFlashItem, this.flashItem, this.monitorItem);
   }
 
   initialize(): void {
@@ -33,6 +35,7 @@ export class StatusBarProvider {
     this.portItem.command = "espforge.selectPort";
     this.profileItem.command = "espforge.toggleProfile";
     this.statusItem.command = "espforge.build";
+    this.buildFlashItem.command = "espforge.buildAndFlash";
     this.flashItem.command = "espforge.flash";
     this.monitorItem.command = "espforge.monitor";
 
@@ -51,6 +54,7 @@ export class StatusBarProvider {
       this.portItem.hide();
       this.profileItem.hide();
       this.statusItem.hide();
+      this.buildFlashItem.hide();
       this.flashItem.hide();
       this.monitorItem.hide();
       return;
@@ -78,6 +82,10 @@ export class StatusBarProvider {
     this.statusItem.tooltip = "ESP Forge: Click to build project.";
     this.statusItem.backgroundColor = undefined;
     this.statusItem.show();
+
+    this.buildFlashItem.text = "$(rocket) Build & Flash";
+    this.buildFlashItem.tooltip = "ESP Forge: Build and flash to device";
+    this.buildFlashItem.show();
 
     this.flashItem.text = "$(zap) Flash";
     this.flashItem.tooltip = "ESP Forge: Flash to device";
@@ -137,5 +145,8 @@ export class StatusBarProvider {
     this.portItem.dispose();
     this.profileItem.dispose();
     this.statusItem.dispose();
+    this.buildFlashItem.dispose();
+    this.flashItem.dispose();
+    this.monitorItem.dispose();
   }
 }

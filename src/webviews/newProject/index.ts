@@ -280,7 +280,7 @@ bench = false
 
     if (template === "bare-metal" || template === "no-std-minimal") {
       // Fallback or deprecated options map to embassy
-      return this.getCargoToml("embassy-async", name, chip, features);
+      return this.getCargoToml(name, chip, "embassy-async", features);
     }
 
 

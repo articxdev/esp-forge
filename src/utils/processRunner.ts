@@ -127,6 +127,43 @@ export class ProcessRunner {
     this.output.appendLine(`[ProcessRunner] ${cmd} completed successfully.`);
   }
 
+  /**
+   * Find the actual key used for PATH in an env object (case-insensitive on Windows).
+   * On Windows the key is often "Path" rather than "PATH".
+   */
+  private findPathKey(env: Record<string, string>): string {
+    if (os.platform() === "win32") {
+      for (const key of Object.keys(env)) {
+        if (key.toUpperCase() === "PATH") {
+          return key;
+        }
+      }
+    }
+    return "PATH";
+  }
+
+  /**
+   * Normalize an env object so PATH exists under a single canonical key.
+   * On Windows, merges all case variants (Path, PATH, path) into one entry.
+   */
+  private normalizePathEnv(env: Record<string, string>): void {
+    if (os.platform() !== "win32") {
+      return;
+    }
+    const pathKeys = Object.keys(env).filter((k) => k.toUpperCase() === "PATH");
+    if (pathKeys.length <= 1) {
+      return;
+    }
+    // Keep the value from the LAST key (highest priority)
+    const value = env[pathKeys[pathKeys.length - 1]] ?? "";
+    // Remove all PATH variants
+    for (const key of pathKeys) {
+      delete env[key];
+    }
+    // Set a single canonical key
+    env["PATH"] = value;
+  }
+
   private async buildEnv(
     additionalEnv?: Record<string, string>
   ): Promise<Record<string, string>> {
@@ -150,16 +187,20 @@ export class ProcessRunner {
       } catch { /* ignore */ }
     }
 
-    // Ensure cargo bin is on PATH
-    const cargoBin = path.join(os.homedir(), ".cargo", "bin");
-    const currentPath = base["PATH"] ?? "";
-    if (!currentPath.includes(cargoBin)) {
-      base["PATH"] = `${cargoBin}${path.delimiter}${currentPath}`;
-    }
-
-    // Apply caller-provided env last
+    // Apply caller-provided env
     if (additionalEnv) {
       Object.assign(base, additionalEnv);
+    }
+
+    // Normalize PATH to a single key (handles Windows Path vs PATH duplication)
+    this.normalizePathEnv(base);
+
+    // Ensure cargo bin is on PATH
+    const pathKey = this.findPathKey(base);
+    const cargoBin = path.join(os.homedir(), ".cargo", "bin");
+    const currentPath = base[pathKey] ?? "";
+    if (!currentPath.includes(cargoBin)) {
+      base[pathKey] = `${cargoBin}${path.delimiter}${currentPath}`;
     }
 
     return base;

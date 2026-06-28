@@ -85,10 +85,6 @@
         "title": "ESPForge: Toggle Profile"
       },
       {
-        "command": "espforge.setup",
-        "title": "ESPForge: Setup / Install Tools"
-      },
-      {
         "command": "espforge.manageToolchain",
         "title": "ESPForge: Manage Toolchain"
       },

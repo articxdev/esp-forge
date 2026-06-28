@@ -82,11 +82,22 @@ export function getEspEnvironment(): Record<string, string> {
   // Forward all current env vars
   Object.assign(env, process.env);
 
+  // Find the actual PATH key (Windows may use "Path" instead of "PATH")
+  let pathKey = "PATH";
+  if (platform.isWindows) {
+    for (const key of Object.keys(env)) {
+      if (key.toUpperCase() === "PATH") {
+        pathKey = key;
+        break;
+      }
+    }
+  }
+
   // Ensure cargo bin is on PATH
   const cargoBin = path.join(os.homedir(), ".cargo", "bin");
-  const currentPath = process.env["PATH"] ?? "";
+  const currentPath = env[pathKey] ?? "";
   if (!currentPath.includes(cargoBin)) {
-    env["PATH"] = `${cargoBin}${path.delimiter}${currentPath}`;
+    env[pathKey] = `${cargoBin}${path.delimiter}${currentPath}`;
   }
 
   // Windows: also add rustup toolchains
@@ -98,8 +109,8 @@ export function getEspEnvironment(): Record<string, string> {
       "esp",
       "bin"
     );
-    if (!currentPath.includes(rustupToolchains)) {
-      env["PATH"] = `${rustupToolchains}${path.delimiter}${env["PATH"] ?? ""}`;
+    if (!(env[pathKey] ?? "").includes(rustupToolchains)) {
+      env[pathKey] = `${rustupToolchains}${path.delimiter}${env[pathKey] ?? ""}`;
     }
   }
 

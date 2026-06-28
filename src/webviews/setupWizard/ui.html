@@ -22,60 +22,72 @@
     body {
       background: var(--bg);
       color: var(--text);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
       -webkit-font-smoothing: antialiased;
     }
+    
     .header {
-      background: var(--bg);
-      border-bottom: 1px solid var(--border);
-      padding: 40px 40px 32px;
+      padding: 48px 0 24px;
+      text-align: center;
     }
-    .logo { display: flex; align-items: center; gap: 16px; margin-bottom: 8px; }
-    .logo-icon { display: none; }
-    h1 { font-size: 28px; font-weight: 400; color: var(--text); letter-spacing: -0.5px; }
-    .subtitle { color: var(--subtext); font-size: 14px; margin-top: 8px; }
-    .content { flex: 1; padding: 40px; max-width: 900px; margin: 0 auto; width: 100%; }
+    .logo { justify-content: center; margin-bottom: 16px; }
+    h1 { font-size: 32px; font-weight: 500; color: var(--text); letter-spacing: -1px; }
+    .subtitle { color: var(--subtext); font-size: 15px; margin-top: 8px; }
+    
+    .content { flex: 1; padding: 0 40px 60px; max-width: 720px; margin: 0 auto; width: 100%; }
 
     /* Summary bar */
     .summary-bar {
-      display: flex; gap: 24px; margin-bottom: 32px; padding: 0 0 24px 0;
-      background: transparent; border-bottom: 1px solid var(--border); align-items: center;
+      display: flex; justify-content: space-between; align-items: center; 
+      margin-bottom: 32px; padding: 16px 24px;
+      background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
     }
     .summary-stat { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--subtext); }
-    .badge { font-family: monospace; font-size: 14px; }
+    .badge { font-family: monospace; font-size: 14px; font-weight: 500; }
     .badge-ok { color: var(--success); }
     .badge-bad { color: var(--danger); }
     .badge-warn { color: var(--warning); }
 
     /* Checklist */
-    .check-grid { display: flex; flex-direction: column; gap: 1px; margin-bottom: 32px; background: var(--border); border: 1px solid var(--border); }
+    .check-grid { display: flex; flex-direction: column; gap: 8px; margin-bottom: 40px; }
     .check-item {
-      display: flex; align-items: center; gap: 16px;
-      background: var(--bg); padding: 20px;
-      transition: background 0.2s;
+      display: flex; align-items: flex-start; gap: 16px;
+      background: var(--bg); padding: 20px 24px;
+      border: 1px solid var(--border); border-radius: 8px;
+      transition: all 0.2s ease;
     }
-    .check-item:hover { background: var(--surface); }
-    .check-icon { font-size: 16px; min-width: 24px; text-align: center; font-family: monospace; }
+    .check-item:hover { border-color: var(--border-hover); background: var(--surface); transform: translateY(-1px); }
+    
+    .check-icon { margin-top: 2px; }
     .check-icon.ok { color: var(--success); }
     .check-icon.missing { color: var(--danger); }
+    
     .check-info { flex: 1; }
-    .check-name { font-weight: 500; font-size: 14px; color: var(--text); }
-    .check-desc { color: var(--subtext); font-size: 13px; margin-top: 4px; line-height: 1.4; }
-    .check-version { font-family: monospace; font-size: 12px; color: var(--subtext); margin-top: 4px; }
-    .check-select { margin-left: auto; }
+    .check-name { font-weight: 600; font-size: 15px; color: var(--text); margin-bottom: 4px; }
+    .check-desc { color: var(--subtext); font-size: 13px; line-height: 1.5; }
+    .check-version { 
+      display: inline-block; font-family: monospace; font-size: 11px; 
+      color: var(--bg); background: var(--text); padding: 2px 6px; border-radius: 4px; margin-top: 8px; font-weight: 600; 
+    }
+    
+    .check-select { margin-top: 2px; margin-left: 16px; }
     .check-select input[type=checkbox] { 
-      appearance: none; width: 16px; height: 16px; border: 1px solid var(--border); 
+      appearance: none; width: 18px; height: 18px; border: 1px solid var(--border); border-radius: 4px;
       background: transparent; cursor: pointer; transition: all 0.2s;
     }
-    .check-select input[type=checkbox]:checked { background: var(--text); border-color: var(--text); }
+    .check-select input[type=checkbox]:checked { 
+      background: var(--text); border-color: var(--text);
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'%3E%3C/polyline%3E%3C/svg%3E");
+      background-size: 80%; background-position: center; background-repeat: no-repeat;
+    }
 
     /* Install log */
     .log-container {
-      background: var(--surface); padding: 20px;
-      height: 200px; overflow-y: auto; font-family: 'Cascadia Code', 'Fira Code', monospace;
+      background: #000; padding: 20px; border-radius: 8px;
+      height: 250px; overflow-y: auto; font-family: 'Cascadia Code', 'Fira Code', monospace;
       font-size: 12px; line-height: 1.6; margin-bottom: 32px;
       border: 1px solid var(--border); display: none;
     }
@@ -84,20 +96,20 @@
     .log-line.progress { color: var(--text); }
 
     /* Progress bar */
-    .progress-outer { background: transparent; border: 1px solid var(--border); height: 4px; overflow: hidden; margin-bottom: 24px; display: none; }
+    .progress-outer { background: var(--surface); border-radius: 4px; height: 6px; overflow: hidden; margin-bottom: 32px; display: none; }
     .progress-outer.visible { display: block; }
-    .progress-inner { height: 100%; background: var(--text); transition: width 0.4s ease; }
+    .progress-inner { height: 100%; background: var(--text); transition: width 0.4s ease; border-radius: 4px; }
 
     /* Buttons */
-    .button-row { display: flex; gap: 16px; flex-wrap: wrap; }
+    .button-row { display: flex; gap: 16px; justify-content: flex-end; }
     .btn {
-      padding: 10px 24px; border: none; font-size: 13px;
+      padding: 12px 28px; border: none; font-size: 14px; border-radius: 6px;
       font-weight: 500; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 8px;
     }
     .btn-primary { background: var(--accent); color: var(--accent-fg); }
-    .btn-primary:hover { opacity: 0.8; }
+    .btn-primary:hover { opacity: 0.8; transform: translateY(-1px); }
     .btn-secondary { background: transparent; color: var(--text); border: 1px solid var(--border); }
-    .btn-secondary:hover { border-color: var(--text); }
+    .btn-secondary:hover { border-color: var(--text); background: var(--surface); }
     .btn-success { background: var(--accent); color: var(--accent-fg); }
     .btn:disabled { opacity: 0.2; cursor: not-allowed; pointer-events: none; }
 
@@ -258,9 +270,12 @@
       const gb = missingItems.some(i => i.id === 'espup') ? '~3.5 GB' : '~500 MB';
       document.getElementById('estimateDisk').textContent = gb;
 
+      const iconOk = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+      const iconMissing = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
+
       const rows = result.items.map(item => {
         const isOk = item.status === 'ok';
-        const icon = isOk ? '[OK]' : '[XX]';
+        const icon = isOk ? iconOk : iconMissing;
         const cls = isOk ? 'ok' : 'missing';
         const ver = item.version ? `<div class="check-version">${item.version}</div>` : '';
         const checkbox = !isOk ? `<div class="check-select"><input type="checkbox" class="item-checkbox" data-id="${item.id}" checked></div>` : '';

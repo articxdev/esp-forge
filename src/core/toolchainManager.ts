@@ -1,5 +1,8 @@
 import * as vscode from "vscode";
+import * as os from "os";
+import * as path from "path";
 import { ProcessRunner } from "../utils/processRunner";
+import { getEspEnvironment, getPlatformInfo } from "../bootstrap/platformDetect";
 
 export interface ToolInfo {
   name: string;
@@ -25,11 +28,11 @@ export class ToolchainManager {
 
     // git
     let gitInfo = await this.getToolVersionFallback(["git", "git.exe"], ["--version"]);
-    tools.push({ name: "Git", command: gitInfo.installed ? gitInfo.command : "git", ...gitInfo });
+    tools.push({ name: "Git", ...gitInfo });
 
     // python
     let pythonInfo = await this.getToolVersionFallback(["python3", "python", "py"], ["--version"]);
-    tools.push({ name: "Python", command: pythonInfo.installed ? pythonInfo.command : "python3", ...pythonInfo });
+    tools.push({ name: "Python", ...pythonInfo });
 
     // espup
     const espupInfo = await this.getToolVersion("espup", ["--version"]);
@@ -70,7 +73,7 @@ export class ToolchainManager {
         await this.runner.runStreaming(
           "espup",
           ["update"],
-          {},
+          { env: getEspEnvironment() },
           (line) => {
             this.output.appendLine(line);
             progress.report({ message: line.slice(0, 60) });
@@ -89,7 +92,7 @@ export class ToolchainManager {
         await this.runner.runStreaming(
           "espup",
           ["install"],
-          {},
+          { env: getEspEnvironment() },
           (line) => {
             this.output.appendLine(line);
             progress.report({ message: line.slice(0, 60) });
@@ -121,24 +124,111 @@ export class ToolchainManager {
         case "repair":
           await this.repairInstallation();
           break;
-        case "install-tool":
-          if (msg.tool) {
-            await this.runner.runStreaming(
-              "cargo",
-              ["install", msg.tool],
-              {},
-              (line) => this.output.appendLine(line)
-            );
-            vscode.window.showInformationMessage(`${msg.tool} installed.`);
+        case "install-tool": {
+          const toolName = msg.tool;
+          if (toolName) {
+            try {
+              await vscode.window.withProgress(
+                { location: vscode.ProgressLocation.Notification, title: `ESP Forge: Installing ${toolName}...`, cancellable: false },
+                async (progress) => {
+                  progress.report({ message: "Starting installation..." });
+                  const platformInfo = getPlatformInfo();
+                  const espEnv = getEspEnvironment();
+                  const onLine = (line: string) => {
+                    this.output.appendLine(line);
+                    progress.report({ message: line.slice(0, 60) });
+                  };
+
+                  if (toolName === "rustup" || toolName === "cargo") {
+                    if (platformInfo.isWindows) {
+                      const tmpPath = path.join(os.tmpdir(), "rustup-init.exe");
+                      await this.runner.runStreaming(
+                        "powershell",
+                        [
+                          "-NoProfile",
+                          "-ExecutionPolicy", "Bypass",
+                          "-Command", 
+                          `$ErrorActionPreference = 'Stop'; $settingsPath = Join-Path $env:USERPROFILE '.rustup' 'settings.toml'; if (Test-Path $settingsPath) { Rename-Item $settingsPath settings.toml.bak -Force }; [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; Invoke-WebRequest -UseBasicParsing -Uri 'https://win.rustup.rs/x86_64' -OutFile '${tmpPath}'; & '${tmpPath}' -y -q --default-host x86_64-pc-windows-msvc; exit $LASTEXITCODE`
+                        ],
+                        { env: espEnv },
+                        onLine
+                      );
+                    } else {
+                      await this.runner.runStreaming(
+                        "sh",
+                        ["-c", "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y"],
+                        { env: espEnv },
+                        onLine
+                      );
+                    }
+                  } else {
+                    // Ensure a Rust toolchain is configured (rustup may exist without a default)
+                    await this.ensureRustToolchain(espEnv, onLine);
+
+                    // Try cargo binstall first (fast precompiled binary), fall back to cargo install
+                    let installed = false;
+                    try {
+                      await this.runner.runStreaming("cargo", ["binstall", toolName, "-y"], { env: espEnv }, onLine);
+                      installed = true;
+                    } catch {
+                      onLine("cargo binstall unavailable or failed, falling back to cargo install...");
+                    }
+
+                    if (!installed) {
+                      onLine(`Compiling ${toolName} from source (this may take several minutes)...`);
+                      await this.runner.runStreaming("cargo", ["install", toolName], { env: espEnv }, onLine);
+                    }
+                  }
+                  vscode.window.showInformationMessage(`${toolName} installed.`);
+                  // Refresh panel
+                  const newTools = await this.getToolInfo();
+                  const newTargets = await this.getInstalledTargets();
+                  panel.webview.html = this.buildManagementHtml(newTools, newTargets);
+                }
+              );
+            } catch (err: any) {
+              const errMsg = err?.message ?? String(err);
+              this.output.appendLine(`[ToolchainManager] Install failed for ${toolName}: ${errMsg}`);
+              vscode.window.showErrorMessage(
+                `Failed to install ${toolName}: ${errMsg}. Check "ESP Forge" output channel for details.`
+              );
+            }
           }
           break;
+        }
       }
     });
   }
 
+  /**
+   * Ensure a default Rust toolchain is configured.
+   * Rustup may be installed but without a default toolchain, causing cargo to fail.
+   */
+  private async ensureRustToolchain(
+    env: Record<string, string>,
+    onLine: (line: string) => void
+  ): Promise<void> {
+    try {
+      // Quick check: does cargo work?
+      await this.runner.runSilent("cargo", ["--version"], { env });
+    } catch (err: any) {
+      const msg = String(err.message ?? err);
+      if (msg.includes("no default") || msg.includes("rustup could not choose")) {
+        onLine("No default Rust toolchain found. Setting up 'stable'...");
+        await this.runner.runStreaming("rustup", ["default", "stable"], { env }, onLine);
+        onLine("Rust stable toolchain configured.");
+      } else if (msg.includes("not found") || msg.includes("ENOENT")) {
+        throw new Error(
+          "Cargo is not installed. Please install Rust first by clicking the 'Install' button next to rustup/Cargo in the toolchain panel."
+        );
+      }
+      // For other errors, let the caller handle them
+    }
+  }
+
   private async getToolVersion(cmd: string, args: string[]): Promise<{ installed: boolean; version?: string }> {
     try {
-      const result = await this.runner.runSilent(cmd, args);
+      const result = await this.runner.runSilent(cmd, args, { env: getEspEnvironment() });
       const version = result.stdout.trim().split("\n")[0] ?? "unknown";
       return { installed: true, version };
     } catch {
@@ -149,7 +239,7 @@ export class ToolchainManager {
   private async getToolVersionFallback(cmds: string[], args: string[]): Promise<{ installed: boolean; version?: string; command: string }> {
     for (const cmd of cmds) {
       try {
-        const result = await this.runner.runSilent(cmd, args);
+        const result = await this.runner.runSilent(cmd, args, { env: getEspEnvironment() });
         const version = result.stdout.trim().split("\n")[0] ?? "unknown";
         return { installed: true, version, command: cmd };
       } catch {
@@ -162,14 +252,30 @@ export class ToolchainManager {
   private buildManagementHtml(tools: ToolInfo[], targets: string[]): string {
     const toolRows = tools
       .map(
-        (t) => `
-        <div class="tool-row">
-          <div class="tool-name">${t.name}</div>
-          <div class="tool-version ${t.installed ? "ok" : "missing"}">
-            ${t.installed ? t.version ?? "installed" : "Not installed"}
-          </div>
-          ${t.installed ? `<button class="btn btn-sm btn-secondary" onclick="updateTool('${t.command}')">Update</button>` : `<button class="btn btn-sm btn-primary" onclick="installTool('${t.command}')">Install</button>`}
-        </div>`
+        (t) => {
+          const isSystem = t.name === 'Git' || t.name === 'Python';
+          const icon = t.installed 
+            ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:8px; vertical-align:text-bottom"><polyline points="20 6 9 17 4 12"></polyline></svg>` 
+            : `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:8px; vertical-align:text-bottom"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
+          
+          let buttonHtml = '';
+          if (!isSystem) {
+             buttonHtml = t.installed 
+               ? `<button class="btn btn-sm btn-secondary" onclick="updateTool('${t.command}')">Update</button>` 
+               : `<button class="btn btn-sm btn-primary" onclick="installTool('${t.command}')">Install</button>`;
+          } else if (!t.installed) {
+             buttonHtml = `<span style="font-size:12px; color:var(--subtext)">Please install manually</span>`;
+          }
+
+          return `
+          <div class="tool-row">
+            <div class="tool-name">${t.name}</div>
+            <div class="tool-version ${t.installed ? "ok" : "missing"}">
+              ${icon}${t.installed ? t.version ?? "Installed" : "Not installed"}
+            </div>
+            ${buttonHtml}
+          </div>`;
+        }
       )
       .join("\n");
 

@@ -98,18 +98,7 @@
     .chip-badge { font-size: 10px; font-weight: 400; color: var(--subtext); text-transform: uppercase; letter-spacing: 0.5px; }
     .chip-card.selected .chip-badge { color: var(--text); }
 
-    /* --- Feature Toggles --- */
-    .feature-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1px; background: var(--border); border: 1px solid var(--border); }
-    .feature-item { 
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 16px; background: var(--bg); cursor: pointer; transition: background 0.2s; 
-    }
-    .feature-item:hover { background: var(--surface); }
-    .feature-item.checked { background: var(--text); color: var(--bg); }
-    .feature-item.checked .feature-label { color: var(--bg); }
-    .feature-item input[type=checkbox] { display: none; }
-    .feature-label { font-size: 13px; color: var(--text); transition: color 0.2s; }
-    
+
     /* --- Summary --- */
     .summary-card { max-width: 500px; }
     .summary-row { display: flex; padding: 16px 0; border-bottom: 1px solid var(--border); }
@@ -163,8 +152,6 @@
     <div class="step" id="step3"><div class="step-num"></div><div class="step-label"></div></div>
     <div class="step-connector" id="conn3"></div>
     <div class="step" id="step4"><div class="step-num"></div><div class="step-label"></div></div>
-    <div class="step-connector" id="conn4"></div>
-    <div class="step" id="step5"><div class="step-num"></div><div class="step-label"></div></div>
   </div>
 
   <div class="pages">
@@ -238,13 +225,6 @@
     </div>
 
     <div class="page" id="page4">
-      <h2>Dependencies</h2>
-      <p class="page-desc">Toggle optional libraries to include in your initial configuration.</p>
-      <div class="feature-grid" id="featureGrid">
-        </div>
-    </div>
-
-    <div class="page" id="page5">
       <h2>Review</h2>
       <p class="page-desc">Verify your configuration parameters.</p>
       <div class="summary-card" id="summaryCard"></div>
@@ -270,7 +250,7 @@
   // Logic remains entirely untouched to ensure extension compatibility
   const vscode = acquireVsCodeApi ? acquireVsCodeApi() : { postMessage: console.log };
   let currentPage = 1;
-  const totalPages = 5;
+  const totalPages = 4;
   const state = {
     name: '',
     location: '',
@@ -278,22 +258,6 @@
     template: 'esp-idf-std',
     features: []
   };
-
-  // Emojis removed from labels for a cleaner look, IDs remain the same
-  const ALL_FEATURES = [
-    { id: 'wifi', label: 'WiFi Networking', templates: ['esp-idf-std'] },
-    { id: 'bluetooth', label: 'Bluetooth LE', templates: ['esp-idf-std', 'bare-metal', 'embassy-async'] },
-    { id: 'ethernet', label: 'Ethernet', templates: ['esp-idf-std'] },
-    { id: 'nvs', label: 'NVS Storage', templates: ['esp-idf-std'] },
-    { id: 'spiffs', label: 'SPIFFS File System', templates: ['esp-idf-std'] },
-    { id: 'mqtt', label: 'MQTT Client', templates: ['esp-idf-std'] },
-    { id: 'http-server', label: 'HTTP Server', templates: ['esp-idf-std'] },
-    { id: 'ota', label: 'OTA Updates', templates: ['esp-idf-std'] },
-    { id: 'usb-cdc', label: 'USB CDC Serial', templates: ['esp-idf-std', 'embassy-async'] },
-    { id: 'i2c', label: 'I2C Drivers', templates: ['esp-idf-std', 'bare-metal', 'embassy-async'] },
-    { id: 'spi', label: 'SPI Drivers', templates: ['esp-idf-std', 'bare-metal', 'embassy-async'] },
-    { id: 'defmt', label: 'defmt Logging', templates: ['bare-metal', 'embassy-async', 'no-std-minimal'] }
-  ];
 
   function updateStepper() {
     for (let i = 1; i <= totalPages; i++) {
@@ -321,8 +285,7 @@
     document.getElementById('btnNext').style.display = n < totalPages ? 'block' : 'none';
     document.getElementById('btnCreate').style.display = n === totalPages ? 'block' : 'none';
 
-    if (n === 4) renderFeatures();
-    if (n === 5) renderSummary();
+    if (n === 4) renderSummary();
 
     validateCurrentPage();
     updateStepper();
@@ -357,41 +320,14 @@
     state.template = tmpl;
     document.querySelectorAll('.template-card').forEach(c => c.classList.remove('selected'));
     el.classList.add('selected');
-    state.features = [];
-  }
-
-  function renderFeatures() {
-    const compatible = ALL_FEATURES.filter(f => f.templates.includes(state.template));
-    document.getElementById('featureGrid').innerHTML = compatible.map(f => `
-      <label class="feature-item ${state.features.includes(f.id) ? 'checked' : ''}" onclick="toggleFeature('${f.id}', this)">
-        <span class="feature-label">${f.label}</span>
-        <input type="checkbox" ${state.features.includes(f.id) ? 'checked' : ''} onclick="event.stopPropagation()">
-      </label>
-    `).join('');
-  }
-
-  function toggleFeature(id, el) {
-    el.classList.toggle('checked');
-    const cb = el.querySelector('input');
-    cb.checked = !cb.checked;
-    if (cb.checked) {
-      if (!state.features.includes(id)) state.features.push(id);
-    } else {
-      state.features = state.features.filter(f => f !== id);
-    }
   }
 
   function renderSummary() {
-    const featureTags = state.features.length > 0
-      ? state.features.join(', ')
-      : '<span style="color:var(--subtext);">None</span>';
-
     document.getElementById('summaryCard').innerHTML = `
       <div class="summary-row"><div class="summary-label">Name</div><div class="summary-value">${state.name || '—'}</div></div>
       <div class="summary-row"><div class="summary-label">Path</div><div class="summary-value" style="font-family:monospace">${state.location || '—'}/${state.name || ''}</div></div>
       <div class="summary-row"><div class="summary-label">Hardware</div><div class="summary-value">${state.chip.toUpperCase()}</div></div>
-      <div class="summary-row"><div class="summary-label">Framework</div><div class="summary-value">${state.template}</div></div>
-      <div class="summary-row" style="border:none"><div class="summary-label">Features</div><div class="summary-value">${featureTags}</div></div>
+      <div class="summary-row" style="border:none"><div class="summary-label">Framework</div><div class="summary-value">${state.template}</div></div>
     `;
   }
 

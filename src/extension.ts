@@ -8,7 +8,6 @@ import { ToolchainManager } from "./core/toolchainManager";
 import { SidebarProvider } from "./providers/sidebarProvider";
 import { StatusBarProvider } from "./providers/statusBarProvider";
 import { HealthCheck } from "./bootstrap/healthCheck";
-import { SetupWizardPanel } from "./webviews/setupWizard/index";
 import { NewProjectPanel } from "./webviews/newProject/index";
 import { SerialMonitorPanel } from "./webviews/serialMonitor/index";
 import { ComponentBrowserPanel } from "./webviews/componentBrowser/index";
@@ -60,6 +59,33 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     projectManager.hasActiveProject()
   );
 
+  // Auto-refresh UI when project is detected or changed (handles late detection)
+  projectManager.onProjectChanged((project) => {
+    vscode.commands.executeCommand("setContext", "espforge.projectActive", !!project);
+    statusBarProvider.refresh();
+    sidebarProvider.refresh();
+    if (project) {
+      outputChannel.appendLine(`[ESP Forge] Project loaded: ${project.config.project.name}`);
+    }
+  });
+
+  // Retry project detection after a delay for new windows where findFiles may not be ready yet
+  if (!projectManager.hasActiveProject()) {
+    setTimeout(async () => {
+      if (!projectManager.hasActiveProject()) {
+        outputChannel.appendLine("[ESP Forge] Retrying project detection...");
+        await projectManager.detectProject();
+        statusBarProvider.refresh();
+        sidebarProvider.refresh();
+        vscode.commands.executeCommand(
+          "setContext",
+          "espforge.projectActive",
+          projectManager.hasActiveProject()
+        );
+      }
+    }, 2000);
+  }
+
   // Register all commands
   registerCommands(
     context,
@@ -93,14 +119,9 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       const result = await healthCheck.runQuickCheck();
       if (!result.allHealthy) {
         const missing = result.missing.join(", ");
-        const action = await vscode.window.showWarningMessage(
-          `ESP Forge: Missing tools detected (${missing}). Open setup wizard?`,
-          "Open Setup Wizard",
-          "Dismiss"
+        vscode.window.showWarningMessage(
+          `ESP Forge: Missing tools detected (${missing}). Please install them manually or use the Toolchain Manager.`
         );
-        if (action === "Open Setup Wizard") {
-          SetupWizardPanel.createOrShow(context, healthCheck);
-        }
       }
     } catch (err) {
       outputChannel.appendLine(`[ESP Forge] Health check error: ${String(err)}`);
@@ -252,11 +273,6 @@ function registerCommands(
     await projectManager.toggleProfile();
     statusBarProvider.refresh();
     sidebarProvider.refresh();
-  });
-
-  register("espforge.setup", async () => {
-    const healthCheck = new HealthCheck(context, outputChannel);
-    SetupWizardPanel.createOrShow(context, healthCheck);
   });
 
   register("espforge.manageToolchain", async () => {
